@@ -1,9 +1,9 @@
 /**
  * FIRST-PERSON ZOMBIES ARENA (Three.js) — ACTIVISION ERA GAME SWAP
  * Features:
- *  - Unlimited Rifle Ammo + Recoil + Muzzle Flash + Raycast Hitmarkers
+ *  - Unlimited Full-Auto Rifle Ammo + Recoil + Muzzle Flash + Raycast Hitmarkers
  *  - Unlimited Parabolic Frag Grenades (G / Right-Click / Mobile Button) with AoE Blast & Screen Shake
- *  - Endless Advancing Zombie Waves
+ *  - Endless Advancing Zombie Waves + Clean Pointer Lock ESC handling
  */
 
 import * as THREE from 'three';
@@ -14,6 +14,8 @@ export class ZombiesGame {
     this.moduleEl = moduleEl;
     this.isPlaying = false;
     this.isVisible = false;
+    this.isFiring = false;
+    this.fireCooldown = 0;
 
     this.yaw = 0;
     this.pitch = 0;
@@ -169,8 +171,32 @@ export class ZombiesGame {
 
     if (btnPlay) btnPlay.addEventListener('click', () => this.start());
     if (btnExit) btnExit.addEventListener('click', () => this.stop());
-    if (btnFire) btnFire.addEventListener('pointerdown', (e) => { e.stopPropagation(); this.fireWeapon(); });
-    if (btnNade) btnNade.addEventListener('pointerdown', (e) => { e.stopPropagation(); this.throwGrenade(); });
+
+    if (btnFire) {
+      btnFire.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        this.isFiring = true;
+        this.fireWeapon();
+      });
+      const stopFire = () => { this.isFiring = false; };
+      btnFire.addEventListener('pointerup', stopFire);
+      btnFire.addEventListener('pointercancel', stopFire);
+      btnFire.addEventListener('pointerleave', stopFire);
+    }
+
+    if (btnNade) {
+      btnNade.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        this.throwGrenade();
+      });
+    }
+
+    // Sync pause state when user presses ESC to exit desktop Pointer Lock
+    document.addEventListener('pointerlockchange', () => {
+      if (this.isPlaying && document.pointerLockElement !== this.canvas && window.matchMedia('(pointer: fine)').matches) {
+        this.stop();
+      }
+    });
 
     // Pointer Lock & Touch/Mouse Drag Aiming
     let dragging = false;
@@ -187,6 +213,7 @@ export class ZombiesGame {
       lastX = e.clientX;
       lastY = e.clientY;
       if (e.pointerType === 'mouse') {
+        this.isFiring = true;
         this.fireWeapon();
       }
     });
@@ -206,7 +233,11 @@ export class ZombiesGame {
       }
     });
 
-    window.addEventListener('pointerup', () => { dragging = false; });
+    window.addEventListener('pointerup', () => {
+      dragging = false;
+      this.isFiring = false;
+    });
+
     this.canvas.addEventListener('contextmenu', (e) => {
       if (this.isPlaying) e.preventDefault();
     });
@@ -230,6 +261,7 @@ export class ZombiesGame {
 
   start() {
     this.isPlaying = true;
+    this.isFiring = false;
     this.moduleEl.classList.add('is-playing');
     if (this.canvas.requestPointerLock && window.matchMedia('(pointer: fine)').matches) {
       this.canvas.requestPointerLock();
@@ -241,6 +273,7 @@ export class ZombiesGame {
 
   stop() {
     this.isPlaying = false;
+    this.isFiring = false;
     this.moduleEl.classList.remove('is-playing');
     if (document.pointerLockElement === this.canvas) {
       document.exitPointerLock();
@@ -249,7 +282,8 @@ export class ZombiesGame {
 
   fireWeapon() {
     if (!this.isPlaying) return;
-    this.recoil = 0.14;
+    this.fireCooldown = 0.13;
+    this.recoil = 0.13;
     this.muzzleLight.intensity = 7;
 
     this.raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
@@ -344,6 +378,12 @@ export class ZombiesGame {
     this.weapon.position.y = -0.28 + Math.sin(t * 2.5) * 0.008;
 
     if (this.isPlaying) {
+      // Full-auto unlimited ammo cadence when trigger held
+      if (this.fireCooldown > 0) this.fireCooldown -= dt;
+      if (this.isFiring && this.fireCooldown <= 0) {
+        this.fireWeapon();
+      }
+
       this.spawnTimer += dt;
       if (this.spawnTimer > Math.max(0.7, 2.0 - this.wave * 0.12) && this.zombies.length < 18) {
         this.spawnTimer = 0;

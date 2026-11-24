@@ -1,8 +1,8 @@
 /**
  * 3D HERO WORLD & PLAYABLE FURY FLIGHT DECK (Three.js)
  * Features:
- *  - Monumental 3D illuminated "RONALD GINOTI" monoliths
- *  - Playable 3D Fury aircraft with Runway Takeoff, Banking Flight, and Landing physics
+ *  - Monumental 3D illuminated "RONALD GINOTI" monoliths (auto-refreshes when web fonts load)
+ *  - Playable 3D Fury aircraft with Runway Takeoff, Banking Flight, and Aligned Auto-Landing
  *  - 3D Warzone Combat Compound with repetitive tracer fire & particle grenade explosions
  *  - 3D Water Polo Arena with animated water waves & lane markers
  */
@@ -54,12 +54,14 @@ export class FuryWorld {
     this.scene.background = new THREE.Color(0x06080d);
     this.scene.fog = new THREE.FogExp2(0x06080d, 0.0028);
 
-    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.5, 1200);
+    const w = this.canvas.parentElement?.clientWidth || window.innerWidth;
+    const h = this.canvas.parentElement?.clientHeight || window.innerHeight;
+    this.camera = new THREE.PerspectiveCamera(58, w / h, 0.5, 1200);
     this.camera.position.set(0, 26, 175);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setSize(w, h);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.15;
 
@@ -86,11 +88,11 @@ export class FuryWorld {
     this.scene.add(new THREE.Points(starGeo, starMat));
 
     window.addEventListener('resize', () => {
-      const w = this.canvas.parentElement.clientWidth;
-      const h = this.canvas.parentElement.clientHeight;
-      this.camera.aspect = w / h;
+      const nw = this.canvas.parentElement?.clientWidth || window.innerWidth;
+      const nh = this.canvas.parentElement?.clientHeight || window.innerHeight;
+      this.camera.aspect = nw / nh;
       this.camera.updateProjectionMatrix();
-      this.renderer.setSize(w, h);
+      this.renderer.setSize(nw, nh);
     });
   }
 
@@ -136,23 +138,30 @@ export class FuryWorld {
     textCanvas.width = 2048;
     textCanvas.height = 512;
     const ctx = textCanvas.getContext('2d');
-    ctx.clearRect(0, 0, 2048, 512);
-
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = '400 210px "Instrument Serif", Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(56, 189, 248, 0.75)';
-    ctx.shadowBlur = 32;
-    ctx.fillText('RONALD GINOTI', 1024, 240);
-
-    ctx.font = '500 34px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#38bdf8';
-    ctx.shadowBlur = 12;
-    ctx.fillText('AUTONOMY  //  SYSTEMS  //  FLIGHT SOFTWARE', 1024, 375);
-
     const tex = new THREE.CanvasTexture(textCanvas);
     tex.anisotropy = 8;
+
+    const drawNameTexture = () => {
+      ctx.clearRect(0, 0, 2048, 512);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '400 210px "Instrument Serif", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.75)';
+      ctx.shadowBlur = 32;
+      ctx.fillText('RONALD GINOTI', 1024, 240);
+
+      ctx.font = '500 34px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowBlur = 12;
+      ctx.fillText('AUTONOMY  //  SYSTEMS  //  FLIGHT SOFTWARE', 1024, 375);
+      tex.needsUpdate = true;
+    };
+
+    drawNameTexture();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(drawNameTexture);
+    }
 
     const signGroup = new THREE.Group();
     const frontMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
@@ -515,17 +524,23 @@ export class FuryWorld {
 
     // Active Player Flight Mode
     if (this.autoLanding) {
-      // Smoothly guide back to runway centerline and touch down
-      const targetPos = new THREE.Vector3(0, 1.35, 115);
+      // Smoothly guide back to runway centerline, align heading to runway (PI), and touch down
+      const targetPos = new THREE.Vector3(0, 1.35, 125);
       f.pos.lerp(targetPos, dt * 1.4);
-      f.pitch *= 0.92;
-      f.roll *= 0.92;
+      const yawDiff = Math.atan2(Math.sin(Math.PI - f.yaw), Math.cos(Math.PI - f.yaw));
+      f.yaw += yawDiff * dt * 2.5;
+      f.pitch *= 0.9;
+      f.roll *= 0.9;
       f.speed = Math.max(0, f.speed - dt * 22);
       f.throttle = Math.max(0, f.throttle - dt * 0.4);
       if (f.pos.distanceTo(targetPos) < 2.2) {
-        f.pos.y = 1.35;
+        f.pos.set(0, 1.35, 125);
+        f.yaw = Math.PI;
+        f.pitch = 0;
+        f.roll = 0;
         f.grounded = true;
         f.speed = 0;
+        f.throttle = 0;
         this.autoLanding = false;
       }
     } else {
@@ -577,6 +592,10 @@ export class FuryWorld {
       }
       f.pos.y = Math.min(180, f.pos.y);
     }
+
+    // Sync mobile throttle slider
+    const slider = document.getElementById('fury-throttle-slider');
+    if (slider) slider.value = String(Math.round(f.throttle * 100));
 
     // Apply transform to Fury mesh
     this.furyMesh.position.copy(f.pos);

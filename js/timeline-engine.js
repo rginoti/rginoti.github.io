@@ -117,6 +117,13 @@ export class TimelineEngine {
 
   _bindEvents() {
     window.addEventListener('resize', () => this.resize());
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => this.resize());
+      ro.observe(this.container);
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => this.resize());
+    }
     window.addEventListener(
       'mousemove',
       (e) => {
