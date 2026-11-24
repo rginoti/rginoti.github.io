@@ -1,195 +1,170 @@
 /**
- * SINGLE-ACTIVE VIDEO ENGINE (Local MP4s + Procedural Tactical Fallbacks)
- * Guarantees strictly ONE video/reel plays at a time across the entire page.
+ * SINGLE-ACTIVE-VIDEO CINEMA CONTROLLER
+ * Guarantees strictly ONE official HD video stream is mounted & playing at a time
+ * across the entire page, backed by official HD poster stills for zero-latency framing.
  */
 
 export class VideoController {
   constructor() {
-    this.cards = Array.from(document.querySelectorAll('[data-video-card]')).map((el) => ({
-      el,
-      video: el.querySelector('video'),
-      canvas: el.querySelector('.video-fallback-canvas'),
-      src: el.dataset.videoSrc,
-      fallbackType: el.dataset.fallback || 'fury',
-      hasMp4: false,
-      active: false,
-      t: Math.random() * 100,
-    }));
+    this.decks = Array.from(document.querySelectorAll('[data-video-card]')).map((viewport) => {
+      const groupEl = viewport.closest('[data-cinema-group]');
+      const reels = JSON.parse(viewport.dataset.reels || '[]');
+      const deck = {
+        groupEl,
+        viewport,
+        reels,
+        activeIndex: 0,
+        muted: true,
+        isActiveInViewport: false,
+        posterEl: viewport.querySelector('.cinema-poster'),
+        slotEl: viewport.querySelector('.cinema-iframe-slot'),
+        titleEl: viewport.querySelector('.cinema-title'),
+        subEl: viewport.querySelector('.cinema-sub'),
+        muteBtn: viewport.querySelector('[data-toggle-mute]'),
+        ytLink: viewport.querySelector('[data-yt-link]'),
+        tabs: groupEl ? Array.from(groupEl.querySelectorAll('[data-reel-select]')) : [],
+        currentIframeId: null,
+      };
+      this._renderReelMeta(deck);
+      this._bindDeckEvents(deck);
+      return deck;
+    });
 
-    this.activeCard = null;
-    this._probeLocalMp4s();
-    this._observeVisibility();
-    this._loop();
+    this.activeDeck = null;
+    this._observeScroll();
   }
 
-  _probeLocalMp4s() {
-    this.cards.forEach((card) => {
-      if (!card.video || !card.src) return;
-      card.video.src = card.src;
-      card.video.addEventListener('loadeddata', () => {
-        card.hasMp4 = true;
-        card.el.classList.add('has-mp4');
-        if (card.active) {
-          card.video.play().catch(() => {});
-        }
-      });
-      card.video.addEventListener('error', () => {
-        card.hasMp4 = false;
-        card.el.classList.remove('has-mp4');
-      });
+  _renderReelMeta(deck) {
+    const reel = deck.reels[deck.activeIndex];
+    if (!reel) return;
+    if (deck.posterEl && reel.yt) {
+      deck.posterEl.onerror = () => {
+        deck.posterEl.onerror = null;
+        deck.posterEl.src = `https://i.ytimg.com/vi/${reel.yt}/hqdefault.jpg`;
+      };
+      deck.posterEl.src = `https://i.ytimg.com/vi/${reel.yt}/maxresdefault.jpg`;
+    }
+    if (deck.titleEl) deck.titleEl.textContent = reel.title;
+    if (deck.subEl) deck.subEl.textContent = reel.caption;
+    if (deck.ytLink) deck.ytLink.href = `https://www.youtube.com/watch?v=${reel.yt}`;
+    if (deck.muteBtn) deck.muteBtn.textContent = deck.muted ? 'UNMUTE' : 'MUTE';
+
+    deck.tabs.forEach((tab, idx) => {
+      const isSelected = idx === deck.activeIndex;
+      tab.classList.toggle('is-active', isSelected);
+      tab.setAttribute('aria-selected', String(isSelected));
     });
   }
 
-  _observeVisibility() {
-    const updateActive = () => {
-      const vpCenter = window.innerHeight * 0.5;
-      let bestCard = null;
+  _bindDeckEvents(deck) {
+    deck.tabs.forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        if (deck.activeIndex === idx) return;
+        deck.activeIndex = idx;
+        this._renderReelMeta(deck);
+        this._activateDeck(deck, true);
+      });
+    });
+
+    if (deck.muteBtn) {
+      deck.muteBtn.addEventListener('click', () => {
+        deck.muted = !deck.muted;
+        deck.muteBtn.textContent = deck.muted ? 'UNMUTE' : 'MUTE';
+        this._activateDeck(deck, true);
+      });
+    }
+  }
+
+  _buildEmbedUrl(videoId, muted) {
+    const muteFlag = muted ? '1' : '0';
+    return (
+      `https://www.youtube-nocookie.com/embed/${videoId}` +
+      `?autoplay=1&mute=${muteFlag}&loop=1&playlist=${videoId}` +
+      `&controls=0&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=1&fs=0`
+    );
+  }
+
+  _mountStream(deck) {
+    const reel = deck.reels[deck.activeIndex];
+    if (!reel || !deck.slotEl) return;
+    const key = `${reel.yt}-${deck.muted ? 'm' : 'u'}`;
+    if (deck.currentIframeId === key) return;
+
+    deck.currentIframeId = key;
+    deck.viewport.classList.remove('is-playing');
+    deck.slotEl.innerHTML = '';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = this._buildEmbedUrl(reel.yt, deck.muted);
+    iframe.title = reel.title;
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        if (deck.isActiveInViewport && deck.currentIframeId === key) {
+          deck.viewport.classList.add('is-playing');
+        }
+      }, 450);
+    });
+    deck.slotEl.appendChild(iframe);
+  }
+
+  _unmountStream(deck) {
+    if (!deck) return;
+    deck.isActiveInViewport = false;
+    deck.currentIframeId = null;
+    deck.viewport.classList.remove('is-active', 'is-playing');
+    if (deck.slotEl) deck.slotEl.innerHTML = '';
+  }
+
+  _activateDeck(targetDeck, forceReload = false) {
+    if (this.activeDeck && this.activeDeck !== targetDeck) {
+      this._unmountStream(this.activeDeck);
+    }
+    this.activeDeck = targetDeck;
+    if (!targetDeck) return;
+
+    targetDeck.isActiveInViewport = true;
+    targetDeck.viewport.classList.add('is-active');
+    if (forceReload) targetDeck.currentIframeId = null;
+    this._mountStream(targetDeck);
+  }
+
+  _observeScroll() {
+    let rafPending = false;
+
+    const evaluate = () => {
+      rafPending = false;
+      const vh = window.innerHeight;
+      const vpCenter = vh * 0.5;
+      let bestDeck = null;
       let bestDist = Infinity;
 
-      for (const card of this.cards) {
-        const rect = card.el.getBoundingClientRect();
-        if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
-        const cardCenter = (rect.top + rect.bottom) * 0.5;
-        const dist = Math.abs(cardCenter - vpCenter);
+      for (const deck of this.decks) {
+        const rect = deck.viewport.getBoundingClientRect();
+        if (rect.bottom < vh * 0.08 || rect.top > vh * 0.92) continue;
+        const center = (rect.top + rect.bottom) * 0.5;
+        const dist = Math.abs(center - vpCenter);
         if (dist < bestDist) {
           bestDist = dist;
-          bestCard = card;
+          bestDeck = deck;
         }
       }
 
-      if (bestCard !== this.activeCard) {
-        if (this.activeCard) {
-          this.activeCard.active = false;
-          this.activeCard.el.classList.remove('is-active');
-          if (this.activeCard.hasMp4) this.activeCard.video.pause();
-        }
-        this.activeCard = bestCard;
-        if (this.activeCard) {
-          this.activeCard.active = true;
-          this.activeCard.el.classList.add('is-active');
-          if (this.activeCard.hasMp4) {
-            this.activeCard.video.play().catch(() => {});
-          }
-        }
+      if (bestDeck !== this.activeDeck) {
+        this._activateDeck(bestDeck);
       }
     };
 
-    window.addEventListener('scroll', updateActive, { passive: true });
-    window.addEventListener('resize', updateActive, { passive: true });
-    updateActive();
-  }
-
-  _loop() {
-    if (this.activeCard && !this.activeCard.hasMp4 && this.activeCard.canvas) {
-      this._drawFallback(this.activeCard);
-    }
-    requestAnimationFrame(() => this._loop());
-  }
-
-  _drawFallback(card) {
-    const canvas = card.canvas;
-    const rect = card.el.getBoundingClientRect();
-    const w = Math.max(320, Math.floor(rect.width));
-    const h = Math.max(180, Math.floor(rect.height));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-    }
-
-    const ctx = canvas.getContext('2d');
-    card.t += 0.025;
-    const t = card.t;
-
-    // Base tactical backdrop
-    ctx.fillStyle = '#070a10';
-    ctx.fillRect(0, 0, w, h);
-
-    // Subtle grid
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
-    ctx.lineWidth = 1;
-    const step = 32;
-    for (let x = 0; x < w; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, h);
-      ctx.stroke();
-    }
-    for (let y = 0; y < h; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
-
-    if (card.fallbackType === 'fury') {
-      // Swept-wing aerodynamic airflow lines + radar sweep
-      for (let i = 0; i < 8; i++) {
-        ctx.beginPath();
-        for (let x = 0; x <= w; x += 12) {
-          const y = h * 0.5 + (i - 3.5) * 18 + Math.sin(x * 0.015 - t * 3 + i) * 10;
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-        ctx.stroke();
+    const schedule = () => {
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(evaluate);
       }
-      ctx.save();
-      ctx.translate(w * 0.5, h * 0.5);
-      ctx.beginPath();
-      ctx.moveTo(42, 0);
-      ctx.lineTo(-26, -24);
-      ctx.lineTo(-14, 0);
-      ctx.lineTo(-26, 24);
-      ctx.closePath();
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
-    } else if (card.fallbackType === 'rockets') {
-      // Solid rocket motor trajectory arc + telemetry plume
-      ctx.beginPath();
-      ctx.moveTo(w * 0.12, h * 0.85);
-      ctx.quadraticCurveTo(w * 0.48, h * 0.12, w * 0.88, h * 0.22);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
+    };
 
-      const p = (t * 0.25) % 1;
-      const rx = (1 - p) * (1 - p) * (w * 0.12) + 2 * (1 - p) * p * (w * 0.48) + p * p * (w * 0.88);
-      const ry = (1 - p) * (1 - p) * (h * 0.85) + 2 * (1 - p) * p * (h * 0.12) + p * p * (h * 0.22);
-      ctx.beginPath();
-      ctx.arc(rx, ry, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#fde68a';
-      ctx.fill();
-    } else if (card.fallbackType === 'submarines') {
-      // Autonomous underwater sonar rings
-      for (let r = 0; r < 4; r++) {
-        const rad = ((t * 32 + r * 42) % 170) + 12;
-        ctx.beginPath();
-        ctx.arc(w * 0.5, h * 0.5, rad, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(34, 211, 238, ${Math.max(0, 1 - rad / 180) * 0.55})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-    } else {
-      // MW 2019 / Warzone 2020 tactical night-vision / drop-zone feed
-      const color = card.fallbackType === 'mw2019' ? '52, 211, 153' : '245, 158, 11';
-      ctx.strokeStyle = `rgba(${color}, 0.45)`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(w * 0.5, h * 0.5, 48 + Math.sin(t * 2) * 8, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Scanning line
-      const scanY = (t * 60) % h;
-      ctx.fillStyle = `rgba(${color}, 0.12)`;
-      ctx.fillRect(0, scanY, w, 3);
-    }
-
-    // Drop-in MP4 hint tag in top-right corner
-    ctx.font = '400 10px "JetBrains Mono", monospace';
-    ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
-    ctx.textAlign = 'right';
-    ctx.fillText(`DROP LOCAL MP4 → ${card.src}`, w - 14, 22);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    evaluate();
   }
 }

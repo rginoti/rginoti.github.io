@@ -1,162 +1,167 @@
 /**
- * MAIN APP ORCHESTRATOR — RONALD GINOTI
- * Connects:
- *  - Concept 1 Tactical HUD Lock-On [ + ] Drawer
- *  - Scroll Era & Progress Telemetry
- *  - Alive Timeline Engine (all 3 modes)
- *  - Single-Active Video Controller
- *  - 3D Fury World + FPS Zombies Arena
- *  - Interactive LA -> SF Cellular Gateway Scrubber
+ * APPLICATION ORCHESTRATOR — RONALD GINOTI PORTFOLIO
  */
 
-import { TimelineEngine } from './timeline-engine.js';
-import { VideoController } from './video-controller.js';
 import { FuryWorld } from './fury-world.js';
 import { ZombiesGame } from './zombies-game.js';
+import { TimelineEngine } from './timeline-engine.js';
+import { VideoController } from './video-controller.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-  /* ---------------------------------------------------------
-     1. CONCEPT 1: TACTICAL HUD LOCK-ON MENU [ + ]
-     --------------------------------------------------------- */
-  const menuTrigger = document.getElementById('menu-trigger');
-  const indexOverlay = document.getElementById('editorial-index');
-  const lockonLabel = document.getElementById('lockon-label');
-  const openArchiveFooterBtn = document.getElementById('btn-open-archive');
+function initPrecisionCursor() {
+  const cursor = document.getElementById('precision-cursor');
+  if (!cursor || window.matchMedia('(pointer: coarse)').matches) return;
 
-  const setMenuOpen = (open) => {
-    menuTrigger.setAttribute('aria-expanded', String(open));
-    indexOverlay.setAttribute('aria-hidden', String(!open));
-    indexOverlay.classList.toggle('is-open', open);
-    if (lockonLabel) lockonLabel.textContent = open ? 'CLOSE // X' : 'INDEX // 00';
+  let tx = -100, ty = -100, cx = -100, cy = -100;
+  window.addEventListener('mousemove', (e) => {
+    tx = e.clientX;
+    ty = e.clientY;
+    cursor.classList.add('is-visible');
+  }, { passive: true });
+
+  document.addEventListener('mouseover', (e) => {
+    const interactive = e.target.closest('a, button, input');
+    cursor.classList.toggle('is-hover', Boolean(interactive));
+  });
+
+  const tick = () => {
+    cx += (tx - cx) * 0.24;
+    cy += (ty - cy) * 0.24;
+    cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function initDossierMenu() {
+  const trigger = document.getElementById('menu-trigger');
+  const overlay = document.getElementById('dossier-overlay');
+  const label = document.getElementById('lockon-label');
+  const footerArchiveBtn = document.getElementById('footer-archive-btn');
+  if (!trigger || !overlay) return;
+
+  const setOpen = (open) => {
+    overlay.classList.toggle('is-open', open);
+    overlay.setAttribute('aria-hidden', String(!open));
+    trigger.setAttribute('aria-expanded', String(open));
+    if (label) label.textContent = open ? 'CLOSE' : 'DOSSIER';
     document.body.style.overflow = open ? 'hidden' : '';
   };
 
-  menuTrigger?.addEventListener('click', () => {
-    const isOpen = menuTrigger.getAttribute('aria-expanded') === 'true';
-    setMenuOpen(!isOpen);
-  });
-
-  openArchiveFooterBtn?.addEventListener('click', () => setMenuOpen(true));
-
-  indexOverlay?.querySelectorAll('[data-close-menu]').forEach((link) => {
-    link.addEventListener('click', () => setMenuOpen(false));
-  });
-
+  trigger.addEventListener('click', () => setOpen(!overlay.classList.contains('is-open')));
+  footerArchiveBtn?.addEventListener('click', () => setOpen(true));
+  overlay.querySelectorAll('[data-close-menu]').forEach((el) => el.addEventListener('click', () => setOpen(false)));
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && indexOverlay?.classList.contains('is-open')) {
-      setMenuOpen(false);
-    }
+    if (e.key === 'Escape' && overlay.classList.contains('is-open')) setOpen(false);
   });
+}
 
-  /* ---------------------------------------------------------
-     2. CORE ENGINES (TIMELINE, VIDEOS, 3D FURY, FPS ZOMBIES)
-     --------------------------------------------------------- */
-  const timelineCanvas = document.getElementById('timeline-canvas');
-  const timelineWorld = document.getElementById('timeline-world');
-  if (timelineCanvas && timelineWorld) {
-    new TimelineEngine(timelineCanvas, timelineWorld);
-  }
+function initScrollTelemetry() {
+  const bar = document.getElementById('scroll-progress-bar');
+  const pctEl = document.getElementById('hud-scroll-pct');
+  const eraEl = document.getElementById('hud-era-label');
+  const sections = Array.from(document.querySelectorAll('[data-era-section]'));
 
-  new VideoController();
-
-  const furyCanvas = document.getElementById('fury-canvas');
-  const furyWorld = furyCanvas ? new FuryWorld(furyCanvas) : null;
-
-  const zombiesCanvas = document.getElementById('zombies-canvas');
-  const zombiesModule = document.getElementById('zombies-stage');
-  if (zombiesCanvas && zombiesModule) {
-    new ZombiesGame(zombiesCanvas, zombiesModule);
-  }
-
-  /* ---------------------------------------------------------
-     3. FURY FLIGHT CONTROLS & LANDMARK CHIPS
-     --------------------------------------------------------- */
-  document.getElementById('btn-fly-fury')?.addEventListener('click', () => {
-    furyWorld?.setFlying(true);
-  });
-
-  document.getElementById('btn-exit-flight')?.addEventListener('click', () => {
-    furyWorld?.setFlying(false);
-  });
-
-  document.getElementById('btn-jump-fury')?.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => furyWorld?.setFlying(true), 650);
-  });
-
-  document.querySelectorAll('[data-fly-target]').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      furyWorld?.focusLandmark(chip.dataset.flyTarget);
-    });
-  });
-
-  /* ---------------------------------------------------------
-     4. SCROLL TELEMETRY & ERA INDICATOR
-     --------------------------------------------------------- */
-  const eraLabel = document.getElementById('hud-era-label');
-  const scrollPct = document.getElementById('hud-scroll-pct');
-  const chapters = Array.from(document.querySelectorAll('[data-chapter]'));
-  const eraTitles = {
-    hero: '00 · 3D WORLD',
-    anduril: '01 · ANDURIL',
-    activision: '02 · ACTIVISION',
-    selftaught: '03 · SELF-TAUGHT',
-    ucsd: '04 · UCSD',
-    crespi: '05 · CRESPI',
-  };
-
-  const onScroll = () => {
+  const update = () => {
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-    const pct = Math.round((window.scrollY / maxScroll) * 100);
-    if (scrollPct) scrollPct.textContent = `${String(pct).padStart(2, '0')}%`;
+    const pct = Math.max(0, Math.min(100, Math.round((window.scrollY / maxScroll) * 100)));
+    if (bar) bar.style.width = `${pct}%`;
+    if (pctEl) pctEl.textContent = `${String(pct).padStart(2, '0')}%`;
 
-    const mid = window.innerHeight * 0.4;
-    for (const ch of chapters) {
-      const r = ch.getBoundingClientRect();
-      if (r.top <= mid && r.bottom >= mid) {
-        const key = ch.dataset.chapter;
-        document.body.dataset.era = key;
-        if (eraLabel) eraLabel.textContent = eraTitles[key] || key.toUpperCase();
+    const probe = window.innerHeight * 0.38;
+    for (const sec of sections) {
+      const r = sec.getBoundingClientRect();
+      if (r.top <= probe && r.bottom >= probe) {
+        document.body.dataset.era = sec.dataset.eraSection || 'hero';
+        if (eraEl && sec.dataset.eraLabel) eraEl.textContent = sec.dataset.eraLabel;
         break;
       }
     }
   };
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+}
 
-  /* ---------------------------------------------------------
-     5. INTERACTIVE LA -> SF CELLULAR GATEWAY SCRUBBER
-     --------------------------------------------------------- */
-  const slider = document.getElementById('roadtrip-slider');
-  const milesEl = document.getElementById('roadtrip-miles');
+function initCarrierGatewayLab() {
+  const slider = document.getElementById('carrier-slider');
+  const car = document.getElementById('carrier-car');
+  const vzwPath = document.getElementById('vzw-path');
+  const attPath = document.getElementById('att-path');
+  const mileReadout = document.getElementById('carrier-mile-readout');
+  const vzwGw = document.getElementById('vzw-gw');
   const vzwRtt = document.getElementById('vzw-rtt');
+  const attGw = document.getElementById('att-gw');
   const attRtt = document.getElementById('att-rtt');
-  const vzwDot = document.getElementById('vzw-dot');
-  const attDot = document.getElementById('att-dot');
+  if (!slider || !car) return;
 
-  const updateRoadtrip = () => {
-    if (!slider) return;
-    const pct = Number(slider.value) / 100;
-    const miles = Math.round(pct * 382);
-    if (milesEl) milesEl.textContent = String(miles);
+  const update = () => {
+    const miles = Number(slider.value);
+    const t = miles / 380;
+    const inv = 1 - t;
+    const x = inv * inv * 40 + 2 * inv * t * 210 + t * t * 380;
+    const y = inv * inv * 148 + 2 * inv * t * 120 + t * t * 42;
+    car.setAttribute('transform', `translate(${x.toFixed(1)}, ${y.toFixed(1)})`);
 
-    const x = 40 + pct * 340;
-    // Verizon hands off cleanly at midpoint (50%) to Bay Area gateway
-    const vzwY = pct < 0.5 ? 55 : pct < 0.56 ? 55 - ((pct - 0.5) / 0.06) * 20 : 35;
-    vzwDot?.setAttribute('cx', String(x));
-    vzwDot?.setAttribute('cy', String(vzwY));
+    const switched = miles >= 185;
+    if (vzwPath) {
+      vzwPath.setAttribute(
+        'd',
+        switched
+          ? `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 380) / 2).toFixed(1)} ${(y - 24).toFixed(1)} 380 42`
+          : `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 18).toFixed(1)} 40 148`
+      );
+    }
+    if (attPath) {
+      attPath.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 34).toFixed(1)} 40 148`);
+    }
 
-    // AT&T stays stuck on LA gateway, increasing hairpin latency as you drive north
-    attDot?.setAttribute('cx', String(x));
-    attDot?.setAttribute('cy', '150');
+    const region = miles < 65 ? 'LOS ANGELES BASIN' : miles < 185 ? 'GRAPEVINE / BAKERSFIELD' : miles < 305 ? 'CENTRAL VALLEY' : 'BAY AREA';
+    if (mileReadout) mileReadout.textContent = `MILE ${miles} · ${region}`;
 
-    const vzwMs = pct < 0.5 ? Math.round(22 + pct * 28) : Math.round(28 - (pct - 0.5) * 12);
-    const attMs = Math.round(24 + pct * 82);
-    if (vzwRtt) vzwRtt.textContent = `${vzwMs} ms`;
-    if (attRtt) attRtt.textContent = `${attMs} ms`;
+    const vzwLatency = switched ? Math.round(16 + (1 - t) * 20) : Math.round(18 + t * 34);
+    const attLatency = Math.round(20 + t * 62);
+    if (vzwGw) vzwGw.textContent = switched ? 'BAY AREA GW (SWITCHED)' : 'LOS ANGELES GW (LOCAL)';
+    if (vzwRtt) vzwRtt.textContent = `${vzwLatency} ms · Jitter ${(2.4 + Math.abs(0.5 - t) * 2.1).toFixed(1)} ms · MTU 1428`;
+    if (attGw) attGw.textContent = switched ? 'LOS ANGELES GW (STUCK)' : 'LOS ANGELES GW (LOCAL)';
+    if (attRtt) attRtt.textContent = `${attLatency} ms · Jitter ${(4.2 + t * 9.8).toFixed(1)} ms · MTU 1400`;
   };
 
-  slider?.addEventListener('input', updateRoadtrip);
-  updateRoadtrip();
-});
+  slider.addEventListener('input', update);
+  update();
+}
+
+function boot() {
+  initPrecisionCursor();
+  initDossierMenu();
+  initScrollTelemetry();
+  initCarrierGatewayLab();
+
+  const furyCanvas = document.getElementById('fury-canvas');
+  if (furyCanvas) new FuryWorld(furyCanvas);
+
+  const zombiesCanvas = document.getElementById('zombies-canvas');
+  const zombiesStage = document.getElementById('zombies-stage');
+  if (zombiesCanvas && zombiesStage) new ZombiesGame(zombiesCanvas, zombiesStage);
+
+  const tlStage = document.getElementById('timeline-stage');
+  const tlCanvas = document.getElementById('timeline-canvas');
+  if (tlStage && tlCanvas) {
+    const timeline = new TimelineEngine(tlStage, tlCanvas);
+    document.querySelectorAll('[data-tl-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-tl-mode]').forEach((b) => {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-selected', 'true');
+        timeline.setMode(btn.dataset.tlMode);
+      });
+    });
+  }
+
+  new VideoController();
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
