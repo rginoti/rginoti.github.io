@@ -1,92 +1,615 @@
-<html>
-    <head>
-    	<meta charset="UTF-8">
-        <title>Home Page</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="style.css">
-    </head>
-    <body>
-    	<div class="float-header" id="left-header">
-        	<a class="social-link" href="https://github.com/karvotch">
-                <img class="social-logo" src="https://uploads-ssl.webflow.com/5e7ae82ba2f1999a10c942c7/5e89631facdbb505553a9695_GitHub-Mark.png">
-            </a>
-            <a class="social-link" href="mailto:ronginoti@gmail.com?subject=Personal%20Website%20Inquiry">
-                <img class="social-logo" src="https://uploads-ssl.webflow.com/5e7ae82ba2f1999a10c942c7/5e896455bebe7d444a02c635_email.png">
-            </a>
-            <a class="social-link" href="https://docs.google.com/document/d/1uOrqe_DwAq-y0Wn0aX89u67O5gIQsj0MCEgMWYsew2U/edit?usp=sharing" title="Resume">
-                <img class="social-logo" src="./assets/resume_icon_white.png">
-            </a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ronald Ginoti — Software Engineer &amp; Systems Lead</title>
+  <meta name="description" content="Ronald Ginoti — Software Engineer leading autonomy &amp; systems at Anduril (Fury). Formerly Activision Central Tech &amp; Call of Duty: Warzone Mobile." />
+  <meta name="theme-color" content="#060709" />
+
+  <!-- Editorial × Aerospace Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/main.css" />
+
+  <!-- Three.js ES Module Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body data-era="hero" data-timeline="flight">
+
+  <!-- =========================================================
+       TOP HUD CHROME (FIXED)
+       ========================================================= -->
+  <header class="hud-header" id="hud-header">
+    <a href="#top" class="hud-brand" aria-label="Ronald Ginoti Home">
+      <span class="hud-brand-dot" aria-hidden="true"></span>
+      <span class="hud-brand-name">RONALD GINOTI</span>
+      <span class="hud-brand-sep" aria-hidden="true">//</span>
+      <span class="hud-brand-era" id="hud-era-label">00 · WORLD</span>
+    </a>
+
+    <div class="hud-right">
+      <div class="hud-telemetry-pill" id="hud-telemetry-pill" aria-live="polite">
+        <span class="mono-dim">MODE</span>
+        <span id="hud-timeline-mode">FLIGHT-PATH</span>
+        <span class="hud-divider">|</span>
+        <span id="hud-scroll-pct">00%</span>
+      </div>
+
+      <!-- CONCEPT 1: TACTICAL HUD LOCK-ON [ + ] -->
+      <button
+        class="lockon-trigger"
+        id="menu-trigger"
+        type="button"
+        aria-expanded="false"
+        aria-controls="editorial-index"
+        aria-label="Open Navigation Index"
+      >
+        <span class="lockon-label" id="lockon-label">INDEX // 00</span>
+        <span class="lockon-reticle" aria-hidden="true">
+          <span class="bracket tl"></span>
+          <span class="bracket tr"></span>
+          <span class="bracket bl"></span>
+          <span class="bracket br"></span>
+          <span class="crosshair-h"></span>
+          <span class="crosshair-v"></span>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       FULL-SCREEN EDITORIAL INDEX OVERLAY (CONCEPT 1 DRAWER)
+       ========================================================= -->
+  <nav class="editorial-index" id="editorial-index" aria-hidden="true">
+    <div class="index-backdrop"></div>
+    <div class="index-shell">
+      <div class="index-meta-bar">
+        <span>SYSTEMS DOSSIER // RGINOTI.GITHUB.IO</span>
+        <span>CLEARANCE: TS // OPSEC COMPLIANT</span>
+      </div>
+
+      <div class="index-grid">
+        <!-- Column 1: Reverse-Chronological Chapters -->
+        <div class="index-col">
+          <div class="index-col-label">01 // CAREER TIMELINE</div>
+          <ol class="index-chapters">
+            <li>
+              <a href="#top" class="index-link" data-close-menu>
+                <span class="idx-num">00</span>
+                <span class="idx-title">3D World &amp; Fury Flight Deck</span>
+                <span class="idx-date">INTERACTIVE</span>
+              </a>
+            </li>
+            <li>
+              <a href="#era-anduril" class="index-link" data-close-menu>
+                <span class="idx-num">01</span>
+                <span class="idx-title">Anduril Industries — Fury</span>
+                <span class="idx-date">2025 — PRESENT</span>
+              </a>
+            </li>
+            <li>
+              <a href="#era-activision" class="index-link" data-close-menu>
+                <span class="idx-num">02</span>
+                <span class="idx-title">Activision — Central Tech &amp; WZM</span>
+                <span class="idx-date">2020 — 2024</span>
+              </a>
+            </li>
+            <li>
+              <a href="#era-selftaught" class="index-link" data-close-menu>
+                <span class="idx-num">03</span>
+                <span class="idx-title">The Self-Taught Grind</span>
+                <span class="idx-date">2018 — 2020</span>
+              </a>
+            </li>
+            <li>
+              <a href="#era-ucsd" class="index-link" data-close-menu>
+                <span class="idx-num">04</span>
+                <span class="idx-title">UC San Diego — CS &amp; NCAA Water Polo</span>
+                <span class="idx-date">2017</span>
+              </a>
+            </li>
+            <li>
+              <a href="#era-crespi" class="index-link" data-close-menu>
+                <span class="idx-num">05</span>
+                <span class="idx-title">Crespi Carmelite — Origin Story</span>
+                <span class="idx-date">2013 — 2017</span>
+              </a>
+            </li>
+          </ol>
         </div>
 
-    	<div class="home-wrapper center">
-	    	<div class="site-title-wrapper">
-	    		<div class="site-title" id="title-foreground">Ronald Ginoti</div>
-	    		<div class="site-title" id="title-background">Ronald Ginoti</div>
-	    	</div>
-    	</div>
-
-        <div id="projects">
-        	<table id="projectsTable">
-        		<tbody>
-	        		<tr>
-	        			<td>
-	        				<!-- TODO: Place images on this directory -->
-	        				<a href="./Codify/index.html"><img class="root-img" src="./assets/codify.gif"></a><br>
-	        				<a href="./Codify/index.html">Codify</a>
-	        			</td>
-	        			<td>
-	        				<!-- CHECK -->
-	        				<a href="./Game_of_Life/index.html"><img class="root-img" src="./assets/Game_of_Life.gif"></a><br>
-	        				<a href="./Game_of_Life/index.html">Game of Life</a>
-	        			</td>
-	        		</tr>
-	        		
-	        		<tr>
-	        			<td>
-	        				<!-- TODO: Figure out what I should do with this directory. -->
-	        				<a href="./CSE/index.html"><img class="root-img" src="./assets/CSE4.gif"></a><br>
-	        				<a href="./CSE/index.html">Clothing Search Engine</a>
-	        			</td>
-	        			<td>
-		        			<!-- CHECK -->
-		        			<a href="./Sorting_Algorithms/index.html"><img class="root-img" src="./assets/Sort_Algo2.gif"></a><br>
-		        			<a href="./Sorting_Algorithms/index.html">Sorting Algorithms</a>
-		        		</td>
-	        		</tr>
-
-	        		<tr>
-	        			<td>
-	        				<!-- TODO: Figure out what to do with this directory. -->
-	        				<a href="./Node_Rest_Shop/index.html"><img src=""></a><br>
-	        				<a href="./Node_Rest_Shop/index.html">Node Rest Shop (Empty)</a>
-	        			</td>
-		        		<td>
-		        			<!-- TODO: Probably place a gif and link to a jupyter notebook? -->
-		        			<!-- <a href="./Speed_Estimation/index.html"><img src=""></a>
-		        			<a href="./Speed_Estimation/index.html">Speed Estimation (Empty)</a> -->
-		        			<a href="https://github.com/karvotch/SpeedChallenge/blob/NN2/notebooks/Speed_Challenge__TRAIN.ipynb"><img src=""></a><br>
-		        			<a href="https://github.com/karvotch/SpeedChallenge/blob/NN2/notebooks/Speed_Challenge__TRAIN.ipynb">Speed Estimation</a>
-		        		</td>
-	        		</tr>
-	        		
-	        		<tr>
-	        			<td>
-	        				<!-- TODO: Port all code to webgl. -->
-	        				<!-- <a href="./OpenGL/index.html"><img src=""></a>
-	        				<a href="./OpenGL/index.html">OpenGL (Empty)</a> -->
-	        				<a href="https://github.com/karvotch/OpenGL_Practice/tree/master/mac/OpenGLTutorial"><img src=""></a><br>
-	        				<a href="https://github.com/karvotch/OpenGL_Practice/tree/master/mac/OpenGLTutorial">OpenGL</a>
-	        			</td>
-		        		<td>
-		        			<!-- TODO: Port code to javascript. -->
-		        			<!-- <a href="./CFR_Blackjack/index.html"><img src=""></a>
-		        			<a href="./CFR_Blackjack/index.html">CFR Blackjack (Empty)</a> -->
-		        			<a href="https://github.com/karvotch/CFR_Blackjack/blob/master/CFR_BlackJack2.ipynb"><img src=""></a><br>
-		        			<a href="https://github.com/karvotch/CFR_Blackjack/blob/master/CFR_BlackJack2.ipynb">CFR Blackjack</a>
-		        		</td>
-	        		</tr>
-        		</tbody>
-        	</table>
+        <!-- Column 2: Archive // Early Work (Legacy Projects) -->
+        <div class="index-col">
+          <div class="index-col-label">02 // ARCHIVE · EARLY WORK (PRE-CAREER)</div>
+          <p class="index-archive-note">
+            Legacy university and self-taught repositories preserved intact from before joining Activision.
+          </p>
+          <ul class="archive-list">
+            <li><a href="./OpenGL/" target="_blank" rel="noopener"><span>OpenGL 3D Game Engine</span><span class="arch-tag">C / GLSL</span></a></li>
+            <li><a href="./Speed_Estimation/" target="_blank" rel="noopener"><span>Dashcam Speed Estimation</span><span class="arch-tag">ML / CV</span></a></li>
+            <li><a href="./CFR_Blackjack/" target="_blank" rel="noopener"><span>CFR Blackjack Bot</span><span class="arch-tag">PYTHON</span></a></li>
+            <li><a href="./Game_of_Life/" target="_blank" rel="noopener"><span>Multiplayer Game of Life</span><span class="arch-tag">WEBSOCKETS</span></a></li>
+            <li><a href="./Sorting_Algorithms/" target="_blank" rel="noopener"><span>Sorting Algorithm Visualizer</span><span class="arch-tag">JAVASCRIPT</span></a></li>
+            <li><a href="./Codify/" target="_blank" rel="noopener"><span>Codify iOS App</span><span class="arch-tag">OBJECTIVE-C</span></a></li>
+            <li><a href="./CSE/" target="_blank" rel="noopener"><span>Clothing Search Engine</span><span class="arch-tag">CRAWLER</span></a></li>
+            <li><a href="./Node_Rest_Shop/" target="_blank" rel="noopener"><span>Node REST Shop</span><span class="arch-tag">NODE.JS</span></a></li>
+          </ul>
         </div>
-    </body>
+      </div>
+
+      <div class="index-footer-bar">
+        <div class="index-socials">
+          <a href="https://github.com/rginoti" target="_blank" rel="noopener">GITHUB.COM/RGINOTI ↗</a>
+        </div>
+        <div class="index-console-hint">
+          DEVTOOLS CONSOLE: <code>rg.help()</code>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =========================================================
+       HERO: 3D WORLD & PLAYABLE FURY FLIGHT DECK
+       ========================================================= -->
+  <section class="hero-stage" id="top" data-chapter="hero">
+    <canvas id="fury-canvas" class="three-canvas" aria-label="Interactive 3D world featuring Ronald Ginoti's name, a flyable 3D Fury aircraft, Warzone combat zone, and Water Polo arena"></canvas>
+
+    <!-- Editorial Hero Overlay (fades smoothly when player takes flight control) -->
+    <div class="hero-overlay" id="hero-overlay">
+      <div class="hero-kicker">
+        <span class="pulse-dot"></span>
+        <span>AUTONOMOUS SYSTEMS · NETWORK ARCHITECTURE · REAL-TIME C++</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="hero-title-sub">THE WORLD OF</span>
+        <span class="hero-title-main">Ronald Ginoti</span>
+      </h1>
+
+      <p class="hero-dek">
+        From daily-loan MacBook Airs at Crespi High School to solo-building global network telemetry at Activision, to leading a team of ten building flight software for Anduril's Fury.
+      </p>
+
+      <div class="hero-actions">
+        <button class="btn-primary" id="btn-fly-fury" type="button">
+          <span class="btn-icon">▲</span>
+          <span>FLY FURY — TAKE CONTROL</span>
+        </button>
+        <a class="btn-ghost" href="#era-anduril">
+          <span>READ THE DOSSIER</span>
+          <span aria-hidden="true">↓</span>
+        </a>
+      </div>
+
+      <div class="hero-world-legend">
+        <span>3D LANDMARKS IN SECTOR:</span>
+        <button type="button" class="landmark-chip" data-fly-target="name">00 · NAME MONUMENT</button>
+        <button type="button" class="landmark-chip" data-fly-target="runway">01 · FURY RUNWAY</button>
+        <button type="button" class="landmark-chip" data-fly-target="warzone">02 · WARZONE COMPOUND</button>
+        <button type="button" class="landmark-chip" data-fly-target="pool">03 · WATER POLO ARENA</button>
+      </div>
+    </div>
+
+    <!-- Active Flight HUD (visible when player takes control of Fury) -->
+    <div class="flight-hud" id="flight-hud" aria-hidden="true">
+      <div class="flight-hud-top">
+        <div class="hud-readout">
+          <span class="hud-k">STATUS</span>
+          <span class="hud-v" id="hud-flight-state">RUNWAY // READY</span>
+        </div>
+        <div class="hud-readout">
+          <span class="hud-k">IAS</span>
+          <span class="hud-v"><span id="hud-airspeed">000</span> KTS</span>
+        </div>
+        <div class="hud-readout">
+          <span class="hud-k">ALT</span>
+          <span class="hud-v"><span id="hud-altitude">0000</span> FT</span>
+        </div>
+        <div class="hud-readout">
+          <span class="hud-k">HDG</span>
+          <span class="hud-v"><span id="hud-heading">000</span>°</span>
+        </div>
+        <div class="hud-readout">
+          <span class="hud-k">THR</span>
+          <span class="hud-v"><span id="hud-throttle">00</span>%</span>
+        </div>
+        <button class="btn-hud-exit" id="btn-exit-flight" type="button">AUTOPILOT [ESC]</button>
+      </div>
+
+      <div class="flight-reticle-center" aria-hidden="true">
+        <div class="pitch-ladder"></div>
+      </div>
+
+      <div class="flight-hud-bottom">
+        <div class="flight-controls-hint desktop-only">
+          <span><kbd>W</kbd>/<kbd>S</kbd> Throttle</span>
+          <span><kbd>↑</kbd>/<kbd>↓</kbd> Pitch (Pull up to Takeoff)</span>
+          <span><kbd>A</kbd>/<kbd>D</kbd> Bank &amp; Turn</span>
+          <span><kbd>L</kbd> Auto-Land</span>
+          <span><kbd>ESC</kbd> Exit</span>
+        </div>
+
+        <!-- Mobile Flight Controls -->
+        <div class="mobile-flight-controls">
+          <div class="touch-pad" id="fury-stick">
+            <div class="touch-knob" id="fury-stick-knob"></div>
+            <span class="touch-label">PITCH / ROLL</span>
+          </div>
+          <div class="mobile-flight-right">
+            <label class="throttle-wrap">
+              <span>THR</span>
+              <input type="range" id="fury-throttle-slider" min="0" max="100" value="0" />
+            </label>
+            <button type="button" class="btn-hud-small" id="btn-mobile-land">LAND</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       MAIN CHRONOLOGICAL NARRATIVE + ALIVE TIMELINE LAYER
+       ========================================================= -->
+  <main class="timeline-world" id="timeline-world">
+    <!-- Alive Timeline Canvas (renders Option A: Flight-Path, Option B: Traceroute, or Option C: Morphing Spine) -->
+    <canvas id="timeline-canvas" class="timeline-canvas" aria-hidden="true"></canvas>
+
+    <!-- =======================================================
+         CHAPTER 01: ANDURIL INDUSTRIES (JAN 2025 – PRESENT)
+         ======================================================= -->
+    <section class="chapter chapter-anduril" id="era-anduril" data-chapter="anduril">
+      <div class="chapter-container">
+        <div class="chapter-header" data-node="anduril-start" data-node-date="2025.01" data-node-label="ANDURIL // FURY">
+          <div class="chapter-eyebrow">
+            <span class="era-code">CHAPTER 01</span>
+            <span class="era-dates">JAN 2025 — PRESENT</span>
+            <span class="clearance-badge">TS CLEARANCE</span>
+          </div>
+          <h2 class="chapter-title">Anduril Industries</h2>
+          <p class="chapter-role">Software Engineer · Team Lead (10 Engineers) · Fury Autonomous Air Vehicle</p>
+        </div>
+
+        <div class="editorial-split">
+          <div class="editorial-copy">
+            <p class="dropcap">
+              After being laid off in September 2024, I scrambled, focused every ounce of energy into the pivot, and joined Anduril in January 2025 to build software for <strong>Fury</strong>. Today I write production <strong>C++ and Python</strong> and lead a team of ten engineers working across the entire autonomy stack.
+            </p>
+            <p>
+              My day-to-day spans <strong>SITL</strong> (Software-in-the-Loop), <strong>HITL</strong> (Hardware-in-the-Loop), live test sites, network architecture design, and direct hardware interfacing. When I joined, Fury had not yet flown.
+            </p>
+            <blockquote class="milestone-callout" data-node="fury-first-flight" data-node-date="2025.10.31" data-node-label="FURY FIRST FLIGHT">
+              <div class="milestone-date">OCTOBER 31, 2025</div>
+              <div class="milestone-text">Fury achieved first flight — and the pace of progress since has been relentless.</div>
+            </blockquote>
+            <p class="opsec-note">
+              <span class="redacted-tag">OPSEC // CUI</span>
+              Much of this work is operationally sensitive, CUI, or classified and cannot be detailed publicly. What I can share is the craft: deterministic systems, clean interfaces, and shipping mission-critical code that flies.
+            </p>
+
+            <div class="chapter-cta-row">
+              <button type="button" class="btn-outline" id="btn-jump-fury">
+                ▲ LAUNCH 3D FURY FLIGHT DECK
+              </button>
+            </div>
+          </div>
+
+          <!-- Single-Active Video Showcase: Anduril -->
+          <div class="media-column">
+            <div class="video-stage" data-video-group="anduril">
+              <div class="video-frame" data-video-card data-video-src="assets/video/anduril-fury.mp4" data-fallback="fury" data-caption="01 // FURY — AUTONOMOUS AIR VEHICLE">
+                <video muted loop playsinline preload="metadata"></video>
+                <canvas class="video-fallback-canvas"></canvas>
+                <div class="video-hud-overlay">
+                  <span class="video-badge">● LIVE REEL</span>
+                  <span class="video-caption">01 // FURY — AUTONOMOUS AIR VEHICLE</span>
+                </div>
+              </div>
+
+              <div class="video-frame" data-video-card data-video-src="assets/video/anduril-rockets.mp4" data-fallback="rockets" data-caption="02 // SOLID ROCKET MOTORS &amp; PROPULSION">
+                <video muted loop playsinline preload="metadata"></video>
+                <canvas class="video-fallback-canvas"></canvas>
+                <div class="video-hud-overlay">
+                  <span class="video-badge">● LIVE REEL</span>
+                  <span class="video-caption">02 // SOLID ROCKET MOTORS &amp; PROPULSION</span>
+                </div>
+              </div>
+
+              <div class="video-frame" data-video-card data-video-src="assets/video/anduril-submarines.mp4" data-fallback="submarines" data-caption="03 // DIVE-LD — AUTONOMOUS UNDERWATER VEHICLES">
+                <video muted loop playsinline preload="metadata"></video>
+                <canvas class="video-fallback-canvas"></canvas>
+                <div class="video-hud-overlay">
+                  <span class="video-badge">● LIVE REEL</span>
+                  <span class="video-caption">03 // DIVE-LD — AUTONOMOUS UNDERWATER VEHICLES</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Spec Strip -->
+        <div class="spec-grid">
+          <div class="spec-cell"><span class="spec-k">LANGUAGES</span><span class="spec-v">C++ · Python</span></div>
+          <div class="spec-cell"><span class="spec-k">LEADERSHIP</span><span class="spec-v">Team of 10 Engineers</span></div>
+          <div class="spec-cell"><span class="spec-k">DOMAINS</span><span class="spec-v">SITL · HITL · Test Sites</span></div>
+          <div class="spec-cell"><span class="spec-k">INFRASTRUCTURE</span><span class="spec-v">Network Architecture · Hardware I/O</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================
+         CHAPTER 02: ACTIVISION (NOV 30, 2020 – SEP 2024)
+         ======================================================= -->
+    <section class="chapter chapter-activision" id="era-activision" data-chapter="activision">
+      <div class="chapter-container">
+        <div class="chapter-header" data-node="activision-start" data-node-date="2020.11.30" data-node-label="ACTIVISION // CENTRAL TECH">
+          <div class="chapter-eyebrow">
+            <span class="era-code">CHAPTER 02</span>
+            <span class="era-dates">NOV 30, 2020 — SEP 2024</span>
+          </div>
+          <h2 class="chapter-title">Activision</h2>
+          <p class="chapter-role">Central Tech &amp; Call of Duty: Warzone Mobile</p>
+        </div>
+
+        <!-- PART A: CENTRAL TECH -->
+        <div class="subchapter">
+          <div class="subchapter-label">PART I // CENTRAL TECH — GLOBAL NETWORK TELEMETRY</div>
+          <div class="editorial-split">
+            <div class="editorial-copy">
+              <p class="dropcap">
+                I broke into the industry on November 30, 2020, joining Activision's <strong>Central Tech</strong> division to support their internal mobile push. My first assignment was building a C++ network diagnostics suite from scratch—backed by a <strong>GCP VM in every region around the world</strong>.
+              </p>
+              <p>
+                Written entirely by me, it started as a Windows desktop application paired with an external <strong>NMEA GPS puck</strong> before I ported it to <strong>Android</strong> using native GPS. Across wired, Wi-Fi, and cellular links (including live Verizon vs. AT&amp;T comparisons), it measured every layer of real-world link quality:
+              </p>
+
+              <div class="metrics-pill-grid">
+                <span>LATENCY</span><span>JITTER</span><span>PACKET LOSS</span>
+                <span>MTU</span><span>PER-HOP MTU</span><span>TRACEROUTE</span>
+                <span>BURSTING</span><span>BANDWIDTH</span><span>NMEA / NATIVE GPS</span>
+              </div>
+            </div>
+
+            <!-- NYT-Style Interactive Feature: LA to SF Road Trip -->
+            <div class="roadtrip-card" data-node="roadtrip" data-node-date="2021" data-node-label="LA → SF DUAL-LAPTOP FIELD TEST">
+              <div class="roadtrip-header">
+                <span class="mono-accent">FIELD EXPERIMENT // INTERSTATE 5</span>
+                <h3>The LA → SF Dual-Laptop Road Trip</h3>
+                <p>
+                  To stress-test cellular handoffs in the wild, I took the project on vacation driving from Los Angeles to San Francisco—running two laptops side-by-side: one on personal <strong>Verizon</strong>, one on corporate <strong>AT&amp;T</strong>.
+                </p>
+              </div>
+
+              <div class="roadtrip-viz">
+                <svg viewBox="0 0 420 190" class="roadtrip-svg" aria-label="Comparison of Verizon vs AT&T cellular gateway handoff from Los Angeles to San Francisco">
+                  <!-- Route Spine -->
+                  <line x1="40" y1="95" x2="380" y2="95" stroke="rgba(255,255,255,0.14)" stroke-width="2" stroke-dasharray="4 4" />
+                  <!-- Cities -->
+                  <circle cx="40" cy="95" r="5" fill="#fff" />
+                  <text x="40" y="122" fill="#9aa3b2" font-size="10" text-anchor="middle" font-family="JetBrains Mono">LAX</text>
+                  <circle cx="210" cy="95" r="4" fill="#64748b" />
+                  <text x="210" y="122" fill="#64748b" font-size="9" text-anchor="middle" font-family="JetBrains Mono">MIDPOINT</text>
+                  <circle cx="380" cy="95" r="5" fill="#fff" />
+                  <text x="380" y="122" fill="#9aa3b2" font-size="10" text-anchor="middle" font-family="JetBrains Mono">SFO</text>
+
+                  <!-- Verizon Path (switches gateway at midpoint) -->
+                  <path id="vzw-path" d="M 40 55 L 210 55 L 230 35 L 380 35" fill="none" stroke="#38bdf8" stroke-width="2.5" />
+                  <text x="42" y="45" fill="#38bdf8" font-size="10" font-family="JetBrains Mono">VERIZON: LA GW → BAY AREA GW (HANDOFF ✓)</text>
+                  <circle id="vzw-dot" cx="40" cy="55" r="4.5" fill="#38bdf8" />
+
+                  <!-- AT&T Path (stuck on LA gateway) -->
+                  <path id="att-path" d="M 40 150 L 380 150" fill="none" stroke="#f97316" stroke-width="2.5" stroke-dasharray="6 3" />
+                  <text x="42" y="172" fill="#f97316" font-size="10" font-family="JetBrains Mono">AT&amp;T: STUCK ON LA GATEWAY (HAIRPIN LATENCY ↑)</text>
+                  <circle id="att-dot" cx="40" cy="150" r="4.5" fill="#f97316" />
+                </svg>
+                <div class="roadtrip-scrubber">
+                  <label for="roadtrip-slider">DRIVE PROGRESS: <span id="roadtrip-miles">0</span> / 382 MI</label>
+                  <input type="range" id="roadtrip-slider" min="0" max="100" value="65" />
+                  <div class="roadtrip-telemetry">
+                    <span class="vzw-stat">VZW RTT: <strong id="vzw-rtt">24 ms</strong></span>
+                    <span class="att-stat">AT&amp;T RTT: <strong id="att-rtt">89 ms</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PART B: WARZONE MOBILE & VIDEO REELS -->
+        <div class="subchapter">
+          <div class="subchapter-label">PART II // CALL OF DUTY: WARZONE MOBILE</div>
+          <div class="editorial-split">
+            <div class="editorial-copy" data-node="wzm" data-node-date="2022–2024" data-node-label="WARZONE MOBILE">
+              <p>
+                From Central Tech, I moved directly onto <strong>Call of Duty: Warzone Mobile</strong>. At the time, the game only supported full Activision, Battle.net, PSN, and Xbox Live logins—creating massive friction for mobile players who just wanted to drop in immediately.
+              </p>
+              <p>
+                I engineered <strong>Guest Login</strong>—allowing players to pick a username and jump straight into a match, directly lifting early mobile retention. Beyond onboarding, I shipped core work across the <strong>achievement engine</strong>, <strong>banning and anti-cheat fixes</strong>, and <strong>mobile match rejoin logic</strong> for flaky cellular connections.
+              </p>
+            </div>
+
+            <!-- Single-Active Video Showcase: CoD through MW 2019 / Warzone 2020 -->
+            <div class="media-column">
+              <div class="video-stage" data-video-group="activision">
+                <div class="video-frame" data-video-card data-video-src="assets/video/cod-mw2019.mp4" data-fallback="mw2019" data-caption="01 // CALL OF DUTY: MODERN WARFARE (2019)">
+                  <video muted loop playsinline preload="metadata"></video>
+                  <canvas class="video-fallback-canvas"></canvas>
+                  <div class="video-hud-overlay">
+                    <span class="video-badge">● LIVE REEL</span>
+                    <span class="video-caption">01 // CALL OF DUTY: MODERN WARFARE (2019)</span>
+                  </div>
+                </div>
+
+                <div class="video-frame" data-video-card data-video-src="assets/video/cod-warzone-2020.mp4" data-fallback="warzone2020" data-caption="02 // CALL OF DUTY: WARZONE (2020)">
+                  <video muted loop playsinline preload="metadata"></video>
+                  <canvas class="video-fallback-canvas"></canvas>
+                  <div class="video-hud-overlay">
+                    <span class="video-badge">● LIVE REEL</span>
+                    <span class="video-caption">02 // CALL OF DUTY: WARZONE (2020)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =====================================================
+             INTERACTIVE GAME SWAP: FIRST-PERSON ZOMBIES ARENA
+             ===================================================== -->
+        <div class="zombies-module" id="zombies-stage" data-node="zombies-game" data-node-date="PLAYABLE" data-node-label="FPS ZOMBIES ARENA">
+          <div class="zombies-header">
+            <div>
+              <span class="mono-accent">INTERACTIVE MODULE // ACTIVISION ERA</span>
+              <h3>First-Person Zombies Arena</h3>
+            </div>
+            <div class="zombies-stats">
+              <span>AMMO: <strong>∞</strong></span>
+              <span>GRENADES: <strong>∞</strong></span>
+              <span>WAVE: <strong id="z-wave">01</strong></span>
+              <span>KILLS: <strong id="z-kills">00</strong></span>
+            </div>
+          </div>
+
+          <div class="zombies-viewport">
+            <canvas id="zombies-canvas" class="zombies-canvas" aria-label="Playable First-Person Zombies 3D mini-game"></canvas>
+
+            <!-- Start Overlay -->
+            <div class="zombies-overlay" id="zombies-overlay">
+              <div class="zombies-overlay-inner">
+                <div class="mono-accent">GAME SWAP // WEAPONS HOT</div>
+                <h4>Defend the Sector</h4>
+                <p>Unlimited rifle ammo. Unlimited frag grenades. Endless waves.</p>
+                <button type="button" class="btn-primary" id="btn-play-zombies">
+                  ▶ DEPLOY INTO ARENA
+                </button>
+                <div class="zombies-controls-hint">
+                  Desktop: Click to Aim &amp; Shoot · <kbd>G</kbd> or Right-Click for Grenade · <kbd>ESC</kbd> Release<br />
+                  Mobile: Drag to Aim · Tap Fire &amp; Grenade
+                </div>
+              </div>
+            </div>
+
+            <!-- In-Game Crosshair & Hitmarker -->
+            <div class="z-crosshair" id="z-crosshair" aria-hidden="true">
+              <span class="zc-t"></span><span class="zc-b"></span><span class="zc-l"></span><span class="zc-r"></span>
+              <span class="z-hitmarker" id="z-hitmarker"></span>
+            </div>
+
+            <!-- Mobile & Quick Action HUD -->
+            <div class="z-action-bar" id="z-action-bar" aria-hidden="true">
+              <button type="button" class="btn-z-fire" id="btn-z-fire">FIRE [∞]</button>
+              <button type="button" class="btn-z-nade" id="btn-z-nade">FRAG [G]</button>
+              <button type="button" class="btn-hud-small" id="btn-z-exit">PAUSE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================
+         CHAPTER 03: THE SELF-TAUGHT GRIND (2018 – 2020)
+         ======================================================= -->
+    <section class="chapter chapter-selftaught" id="era-selftaught" data-chapter="selftaught">
+      <div class="chapter-container">
+        <div class="chapter-header" data-node="selftaught" data-node-date="2018 — 2020" data-node-label="THE SELF-TAUGHT GRIND">
+          <div class="chapter-eyebrow">
+            <span class="era-code">CHAPTER 03</span>
+            <span class="era-dates">2018 — 2020</span>
+          </div>
+          <h2 class="chapter-title">The Self-Taught Grind</h2>
+          <p class="chapter-role">C++ · Objective-C · iOS · Full-Stack Web · Machine Learning</p>
+        </div>
+
+        <div class="editorial-single">
+          <p class="dropcap">
+            With no safety net and no syllabus, I built my own curriculum. I went deep on <strong>C++</strong> and <strong>Objective-C</strong>, shipped an iOS app from scratch, sharpened my web development craft, and worked through <strong>Andrew Ng's original Machine Learning course</strong> on Coursera.
+          </p>
+          <p>
+            I took my shot at <strong>Comma.ai</strong> on their open dashcam speed-estimation challenge—and failed. Without an Nvidia GPU to accelerate training, every iteration was a slog. That rejection didn't end the run; it sharpened the discipline that carried me straight into Activision.
+          </p>
+          <div class="stack-tags">
+            <span>C++17</span><span>Objective-C / iOS</span><span>Andrew Ng ML (Coursera)</span><span>Comma.ai Speed Challenge</span><span>Web Dev</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================
+         CHAPTER 04: UC SAN DIEGO (FALL 2017 – DEC 2017)
+         ======================================================= -->
+    <section class="chapter chapter-ucsd" id="era-ucsd" data-chapter="ucsd">
+      <div class="chapter-container">
+        <div class="chapter-header" data-node="ucsd" data-node-date="2017.12" data-node-label="UCSD // CS &amp; NCAA WATER POLO">
+          <div class="chapter-eyebrow">
+            <span class="era-code">CHAPTER 04</span>
+            <span class="era-dates">FALL 2017 — DEC 2017</span>
+          </div>
+          <h2 class="chapter-title">UC San Diego</h2>
+          <p class="chapter-role">Computer Science Program · NCAA Water Polo</p>
+        </div>
+
+        <div class="editorial-single">
+          <p class="dropcap">
+            After high school, I enrolled in <strong>UCSD's Computer Science program</strong> while competing in <strong>NCAA Water Polo</strong>. One semester in, the gap was unmistakable: I knew I could learn, build, and grow faster on my own than the pace of a university curriculum.
+          </p>
+          <p>
+            In <strong>December 2017</strong>, I made the bet—dropped out, bet everything on raw execution, and never looked back.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================
+         CHAPTER 05: CRESPI CARMELITE HIGH SCHOOL (AUG 2013 – 2017)
+         ======================================================= -->
+    <section class="chapter chapter-crespi" id="era-crespi" data-chapter="crespi">
+      <div class="chapter-container">
+        <div class="chapter-header" data-node="crespi" data-node-date="2013.08" data-node-label="CRESPI // LOANER MACBOOK AIRS">
+          <div class="chapter-eyebrow">
+            <span class="era-code">CHAPTER 05</span>
+            <span class="era-dates">AUG 2013 — 2017</span>
+          </div>
+          <h2 class="chapter-title">Crespi Carmelite High School</h2>
+          <p class="chapter-role">The Spark · Daily-Loan MacBook Airs · Water Polo</p>
+        </div>
+
+        <div class="editorial-single">
+          <p class="dropcap">
+            It started in August 2013 at <strong>Crespi Carmelite High School</strong>, attending on a heavy financial aid package. The school generously kept MacBook Airs available for daily loan—and every chance I got, I checked one out to write <strong>HTML, CSS, JavaScript, Java, Python, and C/C++</strong>.
+          </p>
+          <p>
+            I had appreciated technology my entire life, but those borrowed laptops were where appreciation turned into obsession. Between writing code and competing in water polo across all four years, the foundation for everything that followed was poured right here.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================
+       FOOTER
+       ========================================================= -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <span class="footer-name">RONALD GINOTI</span>
+        <span class="footer-sub">Crafted with obsessive attention to detail.</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/rginoti" target="_blank" rel="noopener">GitHub ↗</a>
+        <button type="button" class="footer-archive-btn" id="btn-open-archive">Early Work Archive</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modular ES Entrypoint -->
+  <script type="module" src="js/app.js"></script>
+</body>
 </html>
