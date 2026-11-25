@@ -1,14 +1,12 @@
 /**
- * 3D MOJAVE WORLD & ACCURATELY SCULPTED ANDURIL YFQ-44A FURY FLIGHT DECK (Three.js)
- * Features:
- *  - Custom GLSL Mojave golden-hour / dusk atmospheric sky dome + procedural desert mountain basin
- *  - Accurately proportioned Anduril YFQ-44A Fury (20 ft L × 17 ft span): chined stealth fuselage,
- *    chin-mounted intake, swept trapezoidal wings with animated ailerons, twin AIM-120 AMRAAMs,
- *    cruciform tail + single vertical fin, retractable tricycle landing gear, volumetric afterburner & contrails
- *  - Monumental architectural 3D "RONALD GINOTI" monoliths ahead of Runway 22
- *  - Live 3D Warzone Combat Sector (continuous repetitive tracer fire & grenade explosions)
- *  - 3D NCAA Olympic Water Polo Arena (animated rippling water, stadium towers, goals, players & ball)
- *  - Desktop (WASD/Arrows + Shift + Space) + Mobile touch flight stick + Waypoint Autopilot + Web Audio turbine
+ * 3D AEROSPACE WORLD & SCULPTED ANDURIL YFQ-44A FURY FLIGHT DECK (v4)
+ * Modeled directly from official Anduril YFQ-44A Fury photography & studio renders:
+ *  - Dedicated studio rim/key aircraft rig so every chine, swept wing edge, pitot boom,
+ *    chin-mounted intake, yellow formation light strip, and single vertical stabilizer gleams clearly
+ *  - Sculptural die-cut architectural "RONALD GINOTI" monument (zero highway billboard!)
+ *  - Recessed precision LED runway lighting on dark slate tarmac
+ *  - Live 3D Warzone Combat Sector (continuous tracer volleys & grenade shockwaves)
+ *  - 3D NCAA Water Polo Arena (rippling dark-cyan pool, goals, swimmers & ball)
  */
 
 import * as THREE from 'three';
@@ -29,7 +27,7 @@ export class FuryWorld {
     this.boostHeld = false;
 
     this.flight = {
-      pos: new THREE.Vector3(0, 1.42, 148),
+      pos: new THREE.Vector3(0, 1.42, 144),
       yaw: Math.PI,
       pitch: 0,
       roll: 0,
@@ -50,8 +48,8 @@ export class FuryWorld {
 
     this._initScene();
     this._buildSkyDome();
-    this._buildMojaveTerrainAndRunway();
-    this._buildMonumentalName();
+    this._buildTerrainAndRunway();
+    this._buildSculpturalName();
     this._buildWarzoneSector();
     this._buildWaterPoloArena();
     this._buildFuryYFQ44A();
@@ -64,13 +62,13 @@ export class FuryWorld {
 
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0c0e14);
-    this.scene.fog = new THREE.FogExp2(0x16141a, 0.00165);
+    this.scene.background = new THREE.Color(0x030406);
+    this.scene.fog = new THREE.FogExp2(0x06080c, 0.00175);
 
     const w = this.canvas.parentElement?.clientWidth || window.innerWidth;
     const h = this.canvas.parentElement?.clientHeight || window.innerHeight;
-    this.camera = new THREE.PerspectiveCamera(54, w / h, 0.4, 1600);
-    this.camera.position.set(14, 9, 168);
+    this.camera = new THREE.PerspectiveCamera(50, w / h, 0.4, 1600);
+    this.camera.position.set(11.5, 5.2, 159);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
@@ -80,29 +78,22 @@ export class FuryWorld {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(w, h);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.18;
+    this.renderer.toneMappingExposure = 1.25;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    const hemi = new THREE.HemisphereLight(0x88b4e6, 0x2c2019, 0.85);
+    const hemi = new THREE.HemisphereLight(0xcbd5e1, 0x0f131a, 1.05);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffb472, 2.2);
-    sun.position.set(160, 85, -180);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
-    sun.shadow.camera.near = 20;
-    sun.shadow.camera.far = 520;
-    const d = 160;
-    sun.shadow.camera.left = -d;
-    sun.shadow.camera.right = d;
-    sun.shadow.camera.top = d;
-    sun.shadow.camera.bottom = -d;
-    this.scene.add(sun);
+    const keyLight = new THREE.DirectionalLight(0xf1f5f9, 2.2);
+    keyLight.position.set(120, 110, 90);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    this.scene.add(keyLight);
 
-    const coolRim = new THREE.DirectionalLight(0x60a5fa, 0.75);
-    coolRim.position.set(-140, 70, 140);
-    this.scene.add(coolRim);
+    const backRim = new THREE.DirectionalLight(0x94a3b8, 1.35);
+    backRim.position.set(-110, 65, -140);
+    this.scene.add(backRim);
 
     window.addEventListener('resize', () => {
       const nw = this.canvas.parentElement?.clientWidth || window.innerWidth;
@@ -119,7 +110,7 @@ export class FuryWorld {
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        uSunDir: { value: new THREE.Vector3(0.55, 0.22, -0.8).normalize() },
+        uHorizonDir: { value: new THREE.Vector3(0.25, 0.08, -0.96).normalize() },
       },
       vertexShader: `
         varying vec3 vWorldPos;
@@ -130,20 +121,18 @@ export class FuryWorld {
         }
       `,
       fragmentShader: `
-        uniform vec3 uSunDir;
+        uniform vec3 uHorizonDir;
         varying vec3 vWorldPos;
         void main() {
           vec3 dir = normalize(vWorldPos);
           float h = clamp(dir.y, 0.0, 1.0);
-          vec3 zenith = vec3(0.025, 0.035, 0.065);
-          vec3 midSky = vec3(0.08, 0.10, 0.16);
-          vec3 horizon = vec3(0.28, 0.16, 0.12);
-          vec3 col = mix(horizon, midSky, smoothstep(0.0, 0.24, h));
-          col = mix(col, zenith, smoothstep(0.2, 0.75, h));
-
-          float sunAmt = max(dot(dir, uSunDir), 0.0);
-          col += vec3(1.0, 0.45, 0.18) * pow(sunAmt, 10.0) * 0.55;
-          col += vec3(1.0, 0.82, 0.62) * pow(sunAmt, 140.0) * 1.4;
+          vec3 zenith = vec3(0.008, 0.010, 0.016);
+          vec3 mid = vec3(0.032, 0.042, 0.062);
+          vec3 horizon = vec3(0.085, 0.102, 0.132);
+          vec3 col = mix(horizon, mid, smoothstep(0.0, 0.22, h));
+          col = mix(col, zenith, smoothstep(0.18, 0.72, h));
+          float glow = max(dot(dir, uHorizonDir), 0.0);
+          col += vec3(0.16, 0.19, 0.24) * pow(glow, 9.0) * 0.65;
           gl_FragColor = vec4(col, 1.0);
         }
       `,
@@ -151,19 +140,18 @@ export class FuryWorld {
     this.scene.add(new THREE.Mesh(skyGeo, skyMat));
 
     const starVerts = [];
-    for (let i = 0; i < 700; i++) {
+    for (let i = 0; i < 600; i++) {
       const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI * 0.36;
+      const phi = Math.random() * Math.PI * 0.38;
       const r = 920;
       starVerts.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi) + 40, r * Math.sin(phi) * Math.sin(theta));
     }
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xe2e8f0, size: 1.4, transparent: true, opacity: 0.6 });
-    this.scene.add(new THREE.Points(starGeo, starMat));
+    this.scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xe2e8f0, size: 1.2, transparent: true, opacity: 0.45 })));
   }
 
-  _buildMojaveTerrainAndRunway() {
+  _buildTerrainAndRunway() {
     const size = 1200;
     const segs = 96;
     const geo = new THREE.PlaneGeometry(size, size, segs, segs);
@@ -171,147 +159,132 @@ export class FuryWorld {
 
     const pos = geo.attributes.position;
     const colors = [];
-    const cFloor = new THREE.Color(0x1b1918);
-    const cSand = new THREE.Color(0x3a2e25);
-    const cMesa = new THREE.Color(0x4b3428);
-    const cPeak = new THREE.Color(0x28262b);
+    const cFlat = new THREE.Color(0x07090d);
+    const cSlope = new THREE.Color(0x10141c);
+    const cRidge = new THREE.Color(0x181e29);
     const tmp = new THREE.Color();
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      const distFromCenter = Math.hypot(x, z - 20);
-      const flatMask = THREE.MathUtils.smoothstep(distFromCenter, 195, 340);
-
-      const n1 = Math.sin(x * 0.011) * Math.cos(z * 0.011) * 32;
-      const n2 = Math.abs(Math.sin(x * 0.023 + z * 0.017)) * 22;
-      const n3 = Math.sin(x * 0.055 - z * 0.041) * 6;
-      const h = Math.max(0, (n1 + n2 + n3 + 22) * flatMask);
+      const dist = Math.hypot(x, z - 20);
+      const flatMask = THREE.MathUtils.smoothstep(dist, 200, 360);
+      const n1 = Math.sin(x * 0.011) * Math.cos(z * 0.011) * 30;
+      const n2 = Math.abs(Math.sin(x * 0.022 + z * 0.016)) * 24;
+      const h = Math.max(0, (n1 + n2 + 18) * flatMask);
       pos.setY(i, h);
 
-      if (h < 1.5) tmp.copy(cFloor).lerp(cSand, 0.35);
-      else if (h < 22) tmp.copy(cSand).lerp(cMesa, h / 22);
-      else tmp.copy(cMesa).lerp(cPeak, Math.min(1, (h - 22) / 38));
+      if (h < 1.5) tmp.copy(cFlat);
+      else if (h < 22) tmp.copy(cFlat).lerp(cSlope, h / 22);
+      else tmp.copy(cSlope).lerp(cRidge, Math.min(1, (h - 22) / 36));
       colors.push(tmp.r, tmp.g, tmp.b);
     }
     geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geo.computeVertexNormals();
 
-    const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, metalness: 0.05 });
-    const terrain = new THREE.Mesh(geo, terrainMat);
+    const terrain = new THREE.Mesh(
+      geo,
+      new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0.08 })
+    );
     terrain.receiveShadow = true;
     this.scene.add(terrain);
 
+    const grid = new THREE.GridHelper(420, 42, 0x161b24, 0x0d1017);
+    grid.position.set(0, 0.03, 45);
+    this.scene.add(grid);
+
     const runway = new THREE.Mesh(
-      new THREE.BoxGeometry(20, 0.22, 150),
-      new THREE.MeshStandardMaterial({ color: 0x181a1f, roughness: 0.88, metalness: 0.08 })
+      new THREE.BoxGeometry(18, 0.16, 152),
+      new THREE.MeshStandardMaterial({ color: 0x0d1016, roughness: 0.78, metalness: 0.15 })
     );
-    runway.position.set(0, 0.11, 100);
+    runway.position.set(0, 0.08, 100);
     runway.receiveShadow = true;
     this.scene.add(runway);
 
-    const paintMat = new THREE.MeshBasicMaterial({ color: 0xe5e3dc });
-    for (let z = 34; z <= 162; z += 11) {
-      const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 5.5), paintMat);
+    const markMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.55 });
+    for (let z = 32; z <= 164; z += 11) {
+      const dash = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 5.2), markMat);
       dash.rotation.x = -Math.PI / 2;
-      dash.position.set(0, 0.23, z);
+      dash.position.set(0, 0.17, z);
       this.scene.add(dash);
     }
-    for (let k = -7; k <= 7; k += 2.2) {
-      if (Math.abs(k) < 1.5) continue;
-      const key = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 6.5), paintMat);
-      key.rotation.x = -Math.PI / 2;
-      key.position.set(k, 0.23, 169);
-      this.scene.add(key);
-    }
 
-    const edgeMat = new THREE.MeshBasicMaterial({ color: 0xfff3d6 });
-    const strobeMat = new THREE.MeshBasicMaterial({ color: 0xff4d00 });
+    const edgeLedMat = new THREE.MeshBasicMaterial({ color: 0xcbd5e1 });
+    const voltLedMat = new THREE.MeshBasicMaterial({ color: 0xdff140 });
     this.runwayStrobes = [];
-    for (let z = 28; z <= 172; z += 14) {
-      for (const side of [-10.4, 10.4]) {
-        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), edgeMat);
-        lamp.position.set(side, 0.4, z);
-        this.scene.add(lamp);
+    for (let z = 28; z <= 172; z += 12) {
+      for (const side of [-8.8, 8.8]) {
+        const led = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.36), edgeLedMat);
+        led.position.set(side, 0.18, z);
+        this.scene.add(led);
       }
     }
-    for (let z = 180; z <= 216; z += 9) {
-      const s = new THREE.Mesh(new THREE.SphereGeometry(0.36, 8, 8), strobeMat.clone());
-      s.position.set(0, 0.55, z);
+    for (let z = 178; z <= 210; z += 8) {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.28), voltLedMat.clone());
+      s.position.set(0, 0.18, z);
       this.scene.add(s);
       this.runwayStrobes.push(s);
     }
   }
 
-  _buildMonumentalName() {
+  _buildSculpturalName() {
     const group = new THREE.Group();
-    group.position.set(0, 0, -28);
+    group.position.set(0, 0, -32);
 
     const plinth = new THREE.Mesh(
-      new THREE.BoxGeometry(74, 2.2, 16),
-      new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.6, metalness: 0.4 })
+      new THREE.BoxGeometry(78, 0.6, 8),
+      new THREE.MeshStandardMaterial({ color: 0x11151d, roughness: 0.35, metalness: 0.7 })
     );
-    plinth.position.y = 1.1;
-    plinth.receiveShadow = true;
+    plinth.position.y = 0.3;
     group.add(plinth);
+
+    const trim = new THREE.Mesh(
+      new THREE.BoxGeometry(78, 0.08, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0xdff140 })
+    );
+    trim.position.set(0, 0.62, 4.02);
+    group.add(trim);
 
     const texCanvas = document.createElement('canvas');
     texCanvas.width = 2048;
-    texCanvas.height = 512;
+    texCanvas.height = 384;
     const tex = new THREE.CanvasTexture(texCanvas);
     tex.anisotropy = 8;
 
-    const drawNameTexture = () => {
+    const drawLetters = () => {
       const ctx = texCanvas.getContext('2d');
-      ctx.fillStyle = '#0c0e13';
-      ctx.fillRect(0, 0, 2048, 512);
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-      ctx.lineWidth = 2;
-      for (let y = 0; y < 512; y += 16) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(2048, y);
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#FF4D00';
-      ctx.fillRect(0, 0, 2048, 12);
-      ctx.fillRect(0, 500, 2048, 12);
-      ctx.fillStyle = '#9A9DA6';
-      ctx.font = '500 34px "JetBrains Mono", monospace';
+      ctx.clearRect(0, 0, 2048, 384);
       ctx.textAlign = 'center';
-      ctx.fillText('AUTONOMY · NETWORKS · SYSTEMS ENGINEERING', 1024, 125);
-      ctx.fillStyle = '#F4F2EC';
-      ctx.font = '400 220px "Instrument Serif", Georgia, serif';
-      ctx.fillText('RONALD GINOTI', 1024, 345);
-      ctx.fillStyle = '#FF4D00';
-      ctx.font = '500 28px "JetBrains Mono", monospace';
-      ctx.fillText('ANDURIL // FURY   ·   ACTIVISION // WARZONE   ·   UCSD // WATER POLO', 1024, 438);
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#F5F5F7';
+      ctx.font = '700 210px -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif';
+      ctx.fillText('RONALD GINOTI', 1024, 210);
       tex.needsUpdate = true;
     };
+    drawLetters();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawLetters);
 
-    drawNameTexture();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawNameTexture);
+    for (let i = 0; i < 7; i++) {
+      const isFront = i === 6;
+      const mat = new THREE.MeshStandardMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.18,
+        side: THREE.DoubleSide,
+        color: isFront ? 0xffffff : 0x475569,
+        emissive: isFront ? 0xf8fafc : 0x1e293b,
+        emissiveMap: tex,
+        emissiveIntensity: isFront ? 0.55 : 0.15,
+        roughness: 0.25,
+        metalness: 0.75,
+      });
+      const layer = new THREE.Mesh(new THREE.PlaneGeometry(76, 14.2), mat);
+      layer.position.set(0, 8.2, (i - 3) * 0.26);
+      group.add(layer);
+    }
 
-    const slabMat = new THREE.MeshStandardMaterial({ color: 0x161922, roughness: 0.35, metalness: 0.72 });
-    const faceMat = new THREE.MeshStandardMaterial({
-      map: tex,
-      emissive: new THREE.Color(0xffffff),
-      emissiveMap: tex,
-      emissiveIntensity: 0.55,
-      roughness: 0.28,
-      metalness: 0.4,
-    });
-
-    const monolith = new THREE.Mesh(
-      new THREE.BoxGeometry(66, 17, 3.2),
-      [slabMat, slabMat, slabMat, slabMat, faceMat, faceMat]
-    );
-    monolith.position.y = 11.2;
-    monolith.castShadow = true;
-    group.add(monolith);
-
-    const uplight = new THREE.PointLight(0xff6b2b, 3.2, 65);
-    uplight.position.set(0, 8, 14);
+    const uplight = new THREE.PointLight(0xe2e8f0, 2.2, 55);
+    uplight.position.set(0, 5, 12);
     group.add(uplight);
 
     this.scene.add(group);
@@ -319,156 +292,120 @@ export class FuryWorld {
 
   _buildWarzoneSector() {
     const wz = new THREE.Group();
-    wz.position.set(-105, 0, -18);
-    this.warzoneCenter = new THREE.Vector3(-105, 6, -18);
+    wz.position.set(-108, 0, -20);
+    this.warzoneCenter = new THREE.Vector3(-108, 6, -20);
 
-    const concreteMat = new THREE.MeshStandardMaterial({ color: 0x2d2c2a, roughness: 0.92 });
-    const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x1c1f24, roughness: 0.65, metalness: 0.4 });
-    const barrierMat = new THREE.MeshStandardMaterial({ color: 0x5c4f3d, roughness: 0.95 });
+    const pad = new THREE.Mesh(
+      new THREE.BoxGeometry(84, 0.3, 74),
+      new THREE.MeshStandardMaterial({ color: 0x0c0f14, roughness: 0.9 })
+    );
+    pad.position.y = 0.15;
+    wz.add(pad);
+
+    const concreteMat = new THREE.MeshStandardMaterial({ color: 0x1e222b, roughness: 0.88 });
+    const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x151820, roughness: 0.6, metalness: 0.45 });
 
     [
-      { x: -22, z: -16, w: 16, h: 14, d: 14 },
-      { x: 20, z: -18, w: 18, h: 11, d: 13 },
-      { x: -18, z: 18, w: 14, h: 9, d: 14 },
-      { x: 22, z: 16, w: 15, h: 16, d: 12 },
+      { x: -22, z: -16, w: 15, h: 13, d: 14 },
+      { x: 20, z: -18, w: 17, h: 10, d: 13 },
+      { x: -18, z: 18, w: 14, h: 8.5, d: 14 },
+      { x: 22, z: 16, w: 14, h: 15, d: 12 },
     ].forEach((b) => {
       const m = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), concreteMat);
       m.position.set(b.x, b.h / 2, b.z);
-      m.castShadow = true;
-      m.receiveShadow = true;
       wz.add(m);
     });
 
-    const containerMat = new THREE.MeshStandardMaterial({ color: 0x6b2d22, roughness: 0.78 });
-    const c1 = new THREE.Mesh(new THREE.BoxGeometry(10, 3.6, 4.2), containerMat);
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(10, 3.6, 4.2), darkSteelMat);
     c1.position.set(-3, 1.8, 2);
     c1.rotation.y = 0.25;
     wz.add(c1);
 
-    const c2 = new THREE.Mesh(new THREE.BoxGeometry(10, 3.6, 4.2), darkSteelMat);
-    c2.position.set(6, 1.8, -5);
-    c2.rotation.y = -0.35;
-    wz.add(c2);
-
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(6, 2.2, 1.6), barrierMat);
-      bar.position.set(Math.cos(a) * 32, 1.1, Math.sin(a) * 28);
-      bar.rotation.y = -a + Math.PI / 2;
-      wz.add(bar);
-    }
-
     this.squadA = [
-      new THREE.Vector3(-124, 2.4, -26),
-      new THREE.Vector3(-118, 2.4, -2),
-      new THREE.Vector3(-126, 2.4, -14),
+      new THREE.Vector3(-126, 2.4, -28),
+      new THREE.Vector3(-120, 2.4, -4),
+      new THREE.Vector3(-128, 2.4, -16),
     ];
     this.squadB = [
-      new THREE.Vector3(-86, 2.4, -28),
-      new THREE.Vector3(-84, 2.4, -4),
-      new THREE.Vector3(-89, 2.4, -16),
+      new THREE.Vector3(-88, 2.4, -30),
+      new THREE.Vector3(-86, 2.4, -6),
+      new THREE.Vector3(-91, 2.4, -18),
     ];
 
-    const opMatA = new THREE.MeshStandardMaterial({ color: 0x3b4d3b, roughness: 0.8 });
-    const opMatB = new THREE.MeshStandardMaterial({ color: 0x4b3b34, roughness: 0.8 });
-    [...this.squadA.map((p) => [p, opMatA]), ...this.squadB.map((p) => [p, opMatB])].forEach(([p, mat]) => {
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 2.0, 8), mat);
+    const opMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+    [...this.squadA, ...this.squadB].forEach((p) => {
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 2.0, 8), opMat);
       body.position.set(p.x, 1.0, p.z);
       this.scene.add(body);
     });
 
-    this.warzoneFlash = new THREE.PointLight(0xff6a1a, 2.5, 80);
-    this.warzoneFlash.position.set(-105, 8, -18);
+    this.warzoneFlash = new THREE.PointLight(0xff7a28, 1.8, 75);
+    this.warzoneFlash.position.set(-108, 8, -20);
     this.scene.add(this.warzoneFlash);
     this.scene.add(wz);
   }
 
   _buildWaterPoloArena() {
     const wp = new THREE.Group();
-    wp.position.set(105, 0, -18);
-    this.waterPoloCenter = new THREE.Vector3(105, 4, -18);
+    wp.position.set(108, 0, -20);
+    this.waterPoloCenter = new THREE.Vector3(108, 4, -20);
 
     const deck = new THREE.Mesh(
-      new THREE.BoxGeometry(58, 1.2, 42),
-      new THREE.MeshStandardMaterial({ color: 0xd6d3cb, roughness: 0.82 })
+      new THREE.BoxGeometry(58, 0.9, 42),
+      new THREE.MeshStandardMaterial({ color: 0x141821, roughness: 0.75, metalness: 0.2 })
     );
-    deck.position.y = 0.6;
-    deck.receiveShadow = true;
+    deck.position.y = 0.45;
     wp.add(deck);
 
     const waterGeo = new THREE.PlaneGeometry(46, 30, 32, 20);
     waterGeo.rotateX(-Math.PI / 2);
     this.waterGeo = waterGeo;
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x06b6d4,
-      emissive: 0x0891b2,
-      emissiveIntensity: 0.35,
-      roughness: 0.14,
-      metalness: 0.18,
-    });
-    const water = new THREE.Mesh(waterGeo, waterMat);
-    water.position.y = 1.28;
+    const water = new THREE.Mesh(
+      waterGeo,
+      new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        emissive: 0x0369a1,
+        emissiveIntensity: 0.28,
+        roughness: 0.16,
+        metalness: 0.25,
+      })
+    );
+    water.position.y = 0.96;
     wp.add(water);
 
-    const goalMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+    const goalMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.3 });
     for (const gx of [-21.5, 21.5]) {
-      const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 7.2), goalMat);
-      topBar.position.set(gx, 3.2, 0);
+      const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 7.2), goalMat);
+      topBar.position.set(gx, 2.8, 0);
       wp.add(topBar);
       for (const gz of [-3.5, 3.5]) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.1, 0.35), goalMat);
-        post.position.set(gx, 2.2, gz);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.9, 0.3), goalMat);
+        post.position.set(gx, 1.85, gz);
         wp.add(post);
       }
     }
 
-    const redMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-    const yellowMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
-    [-16, 16].forEach((x) => {
-      const line = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.15, 29.5), redMat);
-      line.position.set(x, 1.38, 0);
-      wp.add(line);
-    });
-    [-11, 11].forEach((x) => {
-      const line = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.15, 29.5), yellowMat);
-      line.position.set(x, 1.38, 0);
-      wp.add(line);
-    });
-
     this.poloPlayers = [];
-    const capBlue = new THREE.MeshStandardMaterial({ color: 0x1d4ed8 });
+    const capBlue = new THREE.MeshStandardMaterial({ color: 0x38bdf8 });
     const capWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc });
     for (let i = 0; i < 10; i++) {
-      const p = new THREE.Mesh(new THREE.SphereGeometry(0.65, 10, 10), i < 5 ? capBlue : capWhite);
+      const p = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 10), i < 5 ? capBlue : capWhite);
       const bx = (i < 5 ? -1 : 1) * (4 + (i % 5) * 3.1);
       const bz = ((i % 3) - 1) * 7.2;
-      p.position.set(bx, 1.65, bz);
+      p.position.set(bx, 1.25, bz);
       p.userData = { baseX: bx, baseZ: bz, phase: i * 1.1 };
       wp.add(p);
       this.poloPlayers.push(p);
     }
     this.poloBall = new THREE.Mesh(
-      new THREE.SphereGeometry(0.55, 12, 12),
-      new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xca8a04, emissiveIntensity: 0.3 })
+      new THREE.SphereGeometry(0.48, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xdff140, emissive: 0xa3b818, emissiveIntensity: 0.35 })
     );
-    this.poloBall.position.set(0, 2.4, 0);
+    this.poloBall.position.set(0, 2.0, 0);
     wp.add(this.poloBall);
 
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6, roughness: 0.4 });
-    const lampMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
-    for (const sx of [-27, 27]) {
-      for (const sz of [-19, 19]) {
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 18, 8), poleMat);
-        pole.position.set(sx, 9, sz);
-        wp.add(pole);
-        const lamp = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.8, 0.8), lampMat);
-        lamp.position.set(sx, 18, sz);
-        wp.add(lamp);
-      }
-    }
-
-    const poolGlow = new THREE.PointLight(0x38bdf8, 2.8, 70);
-    poolGlow.position.set(0, 14, 0);
+    const poolGlow = new THREE.PointLight(0x38bdf8, 1.8, 60);
+    poolGlow.position.set(0, 10, 0);
     wp.add(poolGlow);
     this.scene.add(wp);
   }
@@ -477,45 +414,57 @@ export class FuryWorld {
     const fury = new THREE.Group();
     this.fury = fury;
 
-    const ramMat = new THREE.MeshStandardMaterial({ color: 0x363b44, roughness: 0.36, metalness: 0.62 });
-    const darkCarbonMat = new THREE.MeshStandardMaterial({ color: 0x16181e, roughness: 0.42, metalness: 0.55 });
-    const orangeStripeMat = new THREE.MeshStandardMaterial({ color: 0xff4d00, emissive: 0xff4d00, emissiveIntensity: 0.25, roughness: 0.35 });
-    const missileBodyMat = new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.3, metalness: 0.2 });
+    const upperGunmetal = new THREE.MeshStandardMaterial({
+      color: 0x4b5362,
+      roughness: 0.32,
+      metalness: 0.68,
+    });
+    const dorsalDark = new THREE.MeshStandardMaterial({
+      color: 0x252932,
+      roughness: 0.38,
+      metalness: 0.58,
+    });
+    const slimeMat = new THREE.MeshBasicMaterial({ color: 0xdff140 });
+    const missileMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.28, metalness: 0.3 });
+
+    const jetKey = new THREE.PointLight(0xf8fafc, 3.6, 26);
+    jetKey.position.set(4.5, 6.0, 2.5);
+    fury.add(jetKey);
+
+    const jetRim = new THREE.PointLight(0x93c5fd, 1.8, 18);
+    jetRim.position.set(-4.5, 3.5, -3.5);
+    fury.add(jetRim);
 
     const fuseGeo = new THREE.CylinderGeometry(0.42, 0.68, 6.2, 6);
     fuseGeo.rotateX(Math.PI / 2);
-    fuseGeo.scale(1.45, 0.72, 1.0);
-    const fuselage = new THREE.Mesh(fuseGeo, ramMat);
+    fuseGeo.scale(1.48, 0.72, 1.0);
+    const fuselage = new THREE.Mesh(fuseGeo, upperGunmetal);
     fuselage.position.set(0, 0, -0.1);
-    fuselage.castShadow = true;
     fury.add(fuselage);
 
-    const noseGeo = new THREE.ConeGeometry(0.61, 3.1, 6);
+    const noseGeo = new THREE.ConeGeometry(0.62, 3.2, 6);
     noseGeo.rotateX(-Math.PI / 2);
     noseGeo.scale(1.0, 0.62, 1.0);
-    const nose = new THREE.Mesh(noseGeo, ramMat);
-    nose.position.set(0, -0.02, -4.75);
-    nose.castShadow = true;
+    const nose = new THREE.Mesh(noseGeo, upperGunmetal);
+    nose.position.set(0, -0.02, -4.8);
     fury.add(nose);
 
-    const pitot = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.035, 0.85, 6), darkCarbonMat);
+    const pitot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.032, 1.25, 8),
+      new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.9, roughness: 0.15 })
+    );
     pitot.rotation.x = Math.PI / 2;
-    pitot.position.set(0, -0.02, -6.55);
+    pitot.position.set(0, -0.02, -6.85);
     fury.add(pitot);
 
-    const spineGeo = new THREE.SphereGeometry(0.54, 16, 12);
-    spineGeo.scale(0.88, 0.48, 3.6);
-    const spine = new THREE.Mesh(spineGeo, darkCarbonMat);
-    spine.position.set(0, 0.36, -1.35);
+    const spineGeo = new THREE.BoxGeometry(0.76, 0.14, 4.2);
+    const spine = new THREE.Mesh(spineGeo, dorsalDark);
+    spine.position.set(0, 0.25, -1.15);
     fury.add(spine);
 
-    const intakeOuter = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.44, 2.4), darkCarbonMat);
-    intakeOuter.position.set(0, -0.44, -1.9);
-    fury.add(intakeOuter);
-
-    const intakeLip = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.32, 0.14), new THREE.MeshBasicMaterial({ color: 0x050608 }));
-    intakeLip.position.set(0, -0.44, -3.12);
-    fury.add(intakeLip);
+    const intake = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.44, 2.45), dorsalDark);
+    intake.position.set(0, -0.44, -1.9);
+    fury.add(intake);
 
     const wingShape = new THREE.Shape();
     wingShape.moveTo(0.6, -1.15);
@@ -524,45 +473,41 @@ export class FuryWorld {
     wingShape.lineTo(0.6, 1.85);
     wingShape.closePath();
 
-    const wingExtrude = { depth: 0.11, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
+    const wingExtrude = { depth: 0.10, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2 };
     const rightWingGeo = new THREE.ExtrudeGeometry(wingShape, wingExtrude);
     rightWingGeo.rotateX(Math.PI / 2);
-    const rightWing = new THREE.Mesh(rightWingGeo, ramMat);
-    rightWing.position.set(0, 0.02, 0.0);
-    rightWing.castShadow = true;
+    const rightWing = new THREE.Mesh(rightWingGeo, upperGunmetal);
+    rightWing.position.set(0, 0.02, 0);
     fury.add(rightWing);
 
     const leftWing = rightWing.clone();
     leftWing.scale.x = -1;
     fury.add(leftWing);
 
-    this.aileronR = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.06, 0.32), darkCarbonMat);
+    for (const sx of [-1, 1]) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.02, 0.05), slimeMat);
+      strip.position.set(sx * 4.18, 0.08, 1.35);
+      fury.add(strip);
+      const noseStrip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.34), slimeMat);
+      noseStrip.position.set(sx * 0.46, 0.06, -3.6);
+      fury.add(noseStrip);
+    }
+
+    this.aileronR = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.05, 0.30), dorsalDark);
     this.aileronR.position.set(2.9, -0.02, 1.82);
     fury.add(this.aileronR);
-
-    this.aileronL = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.06, 0.32), darkCarbonMat);
-    this.aileronL.position.set(-2.9, -0.02, 1.82);
+    this.aileronL = this.aileronR.clone();
+    this.aileronL.position.x = -2.9;
     fury.add(this.aileronL);
 
-    const navRed = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff2d20 }));
-    navRed.position.set(-4.38, 0.0, 1.35);
-    fury.add(navRed);
-    const navGreen = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: 0x22c55e }));
-    navGreen.position.set(4.38, 0.0, 1.35);
-    fury.add(navGreen);
-
     for (const side of [-2.15, 2.15]) {
-      const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, 1.2), darkCarbonMat);
+      const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.30, 1.15), dorsalDark);
       pylon.position.set(side, -0.22, 0.55);
       fury.add(pylon);
-      const missile = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.2, 8), missileBodyMat);
+      const missile = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 2.15, 8), missileMat);
       missile.rotation.x = Math.PI / 2;
-      missile.position.set(side, -0.42, 0.5);
+      missile.position.set(side, -0.40, 0.5);
       fury.add(missile);
-      const mNose = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 8), darkCarbonMat);
-      mNose.rotation.x = -Math.PI / 2;
-      mNose.position.set(side, -0.42, -0.77);
-      fury.add(mNose);
     }
 
     const stabShape = new THREE.Shape();
@@ -571,68 +516,70 @@ export class FuryWorld {
     stabShape.lineTo(2.15, 4.2);
     stabShape.lineTo(0.45, 4.15);
     stabShape.closePath();
-    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 });
+    const stabGeo = new THREE.ExtrudeGeometry(stabShape, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 });
     stabGeo.rotateX(Math.PI / 2);
-    const stabR = new THREE.Mesh(stabGeo, ramMat);
+    const stabR = new THREE.Mesh(stabGeo, upperGunmetal);
     fury.add(stabR);
     const stabL = stabR.clone();
     stabL.scale.x = -1;
     fury.add(stabL);
 
     const finShape = new THREE.Shape();
-    finShape.moveTo(2.2, 0.25);
-    finShape.lineTo(3.55, 2.45);
-    finShape.lineTo(4.3, 2.45);
+    finShape.moveTo(2.15, 0.25);
+    finShape.lineTo(3.6, 2.5);
+    finShape.lineTo(4.32, 2.5);
     finShape.lineTo(4.15, 0.25);
     finShape.closePath();
-    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 });
+    const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.09, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 });
     finGeo.rotateY(-Math.PI / 2);
-    finGeo.translate(0.05, 0, 0);
-    const tailFin = new THREE.Mesh(finGeo, ramMat);
-    tailFin.castShadow = true;
+    finGeo.translate(0.045, 0, 0);
+    const tailFin = new THREE.Mesh(finGeo, upperGunmetal);
     fury.add(tailFin);
 
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.85), orangeStripeMat);
-    stripe.position.set(0, 1.95, 3.65);
-    fury.add(stripe);
+    const finCap = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.12, 0.72), dorsalDark);
+    finCap.position.set(0, 2.46, 3.96);
+    fury.add(finCap);
 
-    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 0.85, 16), darkCarbonMat);
+    const nozzle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.43, 0.85, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1e222a, metalness: 0.8, roughness: 0.3 })
+    );
     nozzle.rotation.x = Math.PI / 2;
     nozzle.position.set(0, 0, 3.35);
     fury.add(nozzle);
 
-    const flameOuterGeo = new THREE.ConeGeometry(0.34, 2.8, 12, 1, true);
+    const flameOuterGeo = new THREE.ConeGeometry(0.32, 2.6, 12, 1, true);
     flameOuterGeo.rotateX(Math.PI / 2);
-    flameOuterGeo.translate(0, 0, 1.4);
+    flameOuterGeo.translate(0, 0, 1.3);
     this.flameOuter = new THREE.Mesh(
       flameOuterGeo,
-      new THREE.MeshBasicMaterial({ color: 0xff5a12, transparent: true, opacity: 0.78, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ color: 0xff7a28, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
     );
     this.flameOuter.position.set(0, 0, 3.7);
     fury.add(this.flameOuter);
 
-    const flameInnerGeo = new THREE.ConeGeometry(0.18, 1.7, 10, 1, true);
+    const flameInnerGeo = new THREE.ConeGeometry(0.16, 1.5, 10, 1, true);
     flameInnerGeo.rotateX(Math.PI / 2);
-    flameInnerGeo.translate(0, 0, 0.85);
+    flameInnerGeo.translate(0, 0, 0.75);
     this.flameInner = new THREE.Mesh(
       flameInnerGeo,
-      new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.92, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.88, side: THREE.DoubleSide })
     );
     this.flameInner.position.set(0, 0, 3.7);
     fury.add(this.flameInner);
 
-    this.burnerLight = new THREE.PointLight(0xff6b1a, 0, 24);
-    this.burnerLight.position.set(0, 0, 4.6);
+    this.burnerLight = new THREE.PointLight(0xff8533, 0.5, 18);
+    this.burnerLight.position.set(0, 0, 4.5);
     fury.add(this.burnerLight);
 
     this.gearGroup = new THREE.Group();
-    const strutMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.25 });
-    const tireMat = new THREE.MeshStandardMaterial({ color: 0x111317, roughness: 0.9 });
+    const strutMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.85, roughness: 0.2 });
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.9 });
     [[0, -3.1], [-1.15, 0.85], [1.15, 0.85]].forEach(([gx, gz]) => {
-      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.95, 6), strutMat);
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.95, 6), strutMat);
       strut.position.set(gx, -0.78, gz);
       this.gearGroup.add(strut);
-      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.14, 12), tireMat);
+      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.13, 12), tireMat);
       tire.rotation.z = Math.PI / 2;
       tire.position.set(gx, -1.22, gz);
       this.gearGroup.add(tire);
@@ -643,7 +590,7 @@ export class FuryWorld {
       const maxPts = 42;
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxPts * 3), 3));
-      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.36 }));
+      const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.30 }));
       line.frustumCulled = false;
       this.scene.add(line);
       return { line, pts: [], maxPts };
@@ -806,24 +753,24 @@ export class FuryWorld {
       dst.z += (Math.random() - 0.5) * 6;
 
       const dir = dst.clone().sub(src).normalize();
-      const tracerGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.6, 5);
+      const tracerGeo = new THREE.CylinderGeometry(0.07, 0.07, 3.6, 5);
       tracerGeo.rotateX(Math.PI / 2);
-      const tracer = new THREE.Mesh(tracerGeo, new THREE.MeshBasicMaterial({ color: fromA ? 0xffa94d : 0xfef08a }));
+      const tracer = new THREE.Mesh(tracerGeo, new THREE.MeshBasicMaterial({ color: fromA ? 0xffb366 : 0xfef08a }));
       tracer.position.copy(src);
       tracer.lookAt(dst);
       this.scene.add(tracer);
       this.tracers.push({ mesh: tracer, vel: dir.multiplyScalar(110), life: 0.5 });
-      this.warzoneFlash.intensity = 4.2;
+      this.warzoneFlash.intensity = 3.2;
     }
 
     if (this.grenadeTimer > 2.3) {
       this.grenadeTimer = 0;
-      const ex = -105 + (Math.random() - 0.5) * 34;
-      const ez = -18 + (Math.random() - 0.5) * 26;
+      const ex = -108 + (Math.random() - 0.5) * 34;
+      const ez = -20 + (Math.random() - 0.5) * 26;
 
       const ball = new THREE.Mesh(
         new THREE.SphereGeometry(1.0, 12, 12),
-        new THREE.MeshBasicMaterial({ color: 0xff5a12, transparent: true, opacity: 0.92 })
+        new THREE.MeshBasicMaterial({ color: 0xff6b24, transparent: true, opacity: 0.9 })
       );
       ball.position.set(ex, 1.4, ez);
       this.scene.add(ball);
@@ -837,10 +784,10 @@ export class FuryWorld {
       this.scene.add(ring);
 
       this.explosions.push({ ball, ring, age: 0, maxAge: 1.1 });
-      this.warzoneFlash.intensity = 9.0;
+      this.warzoneFlash.intensity = 7.5;
     }
 
-    this.warzoneFlash.intensity = THREE.MathUtils.lerp(this.warzoneFlash.intensity, 1.8, dt * 6);
+    this.warzoneFlash.intensity = THREE.MathUtils.lerp(this.warzoneFlash.intensity, 1.4, dt * 6);
 
     for (let i = this.tracers.length - 1; i >= 0; i--) {
       const t = this.tracers[i];
@@ -857,10 +804,10 @@ export class FuryWorld {
       const e = this.explosions[i];
       e.age += dt;
       const p = e.age / e.maxAge;
-      e.ball.scale.setScalar(1 + p * 8.5);
-      e.ball.position.y = 1.4 + p * 5.2;
+      e.ball.scale.setScalar(1 + p * 8.0);
+      e.ball.position.y = 1.4 + p * 5.0;
       e.ball.material.opacity = Math.max(0, 1 - p);
-      e.ring.scale.setScalar(1 + p * 14);
+      e.ring.scale.setScalar(1 + p * 13);
       e.ring.material.opacity = Math.max(0, 1 - p * 1.2);
       if (e.age >= e.maxAge) {
         this.scene.remove(e.ball, e.ring);
@@ -876,18 +823,18 @@ export class FuryWorld {
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const z = pos.getZ(i);
-      pos.setY(i, Math.sin(x * 0.45 + this.time * 3.1) * 0.16 + Math.cos(z * 0.55 + this.time * 2.4) * 0.14);
+      pos.setY(i, Math.sin(x * 0.45 + this.time * 3.1) * 0.14 + Math.cos(z * 0.55 + this.time * 2.4) * 0.12);
     }
     pos.needsUpdate = true;
 
     this.poloPlayers.forEach((p) => {
-      p.position.y = 1.62 + Math.sin(this.time * 3.4 + p.userData.phase) * 0.22;
-      p.position.x = p.userData.baseX + Math.sin(this.time * 0.8 + p.userData.phase) * 1.4;
+      p.position.y = 1.22 + Math.sin(this.time * 3.4 + p.userData.phase) * 0.18;
+      p.position.x = p.userData.baseX + Math.sin(this.time * 0.8 + p.userData.phase) * 1.3;
     });
     if (this.poloBall) {
       const arc = (this.time * 0.9) % (Math.PI * 2);
       this.poloBall.position.x = Math.sin(arc) * 13;
-      this.poloBall.position.y = 2.2 + Math.abs(Math.cos(arc * 2)) * 3.8;
+      this.poloBall.position.y = 1.8 + Math.abs(Math.cos(arc * 2)) * 3.5;
       this.poloBall.position.z = Math.cos(arc) * 5;
     }
   }
@@ -897,7 +844,7 @@ export class FuryWorld {
 
     this.runwayStrobes.forEach((s, idx) => {
       const wave = ((this.time * 4.5 - idx * 0.6) % 2 + 2) % 2;
-      s.material.color.setHex(wave < 0.35 ? 0xffffff : 0xff4d00);
+      s.material.color.setHex(wave < 0.35 ? 0xffffff : 0xdff140);
     });
 
     if (f.grounded) {
@@ -905,9 +852,9 @@ export class FuryWorld {
       f.pitch = THREE.MathUtils.lerp(f.pitch, 0, dt * 4);
       f.roll = THREE.MathUtils.lerp(f.roll, 0, dt * 4);
       f.gearDeploy = THREE.MathUtils.lerp(f.gearDeploy, 1, dt * 4);
-      this.flameOuter.scale.set(0.4, 0.4, 0.2);
-      this.flameInner.scale.set(0.3, 0.3, 0.2);
-      this.burnerLight.intensity = 0.4;
+      this.flameOuter.scale.set(0.35, 0.35, 0.18);
+      this.flameInner.scale.set(0.28, 0.28, 0.18);
+      this.burnerLight.intensity = 0.35;
       this._syncFuryMesh();
       this._updateCamera(dt);
       this._updateHUD();
@@ -930,7 +877,7 @@ export class FuryWorld {
     }
 
     if (this.autoLanding) {
-      const target = new THREE.Vector3(0, 1.42, 148);
+      const target = new THREE.Vector3(0, 1.42, 144);
       const toTarget = target.clone().sub(f.pos);
       const dist = toTarget.length();
       const desiredYaw = Math.atan2(toTarget.x, toTarget.z);
@@ -944,7 +891,7 @@ export class FuryWorld {
       f.gearDeploy = THREE.MathUtils.lerp(f.gearDeploy, 1.0, dt * 2.5);
 
       if (dist < 6.5) {
-        f.pos.set(0, 1.42, 148);
+        f.pos.set(0, 1.42, 144);
         f.yaw = Math.PI;
         f.pitch = 0;
         f.roll = 0;
@@ -954,9 +901,9 @@ export class FuryWorld {
         this.isFlying = false;
         if (this.heroEl) this.heroEl.classList.remove('is-flying');
         const lbl = document.getElementById('btn-takeoff-label');
-        if (lbl) lbl.textContent = 'INITIATE TAKEOFF';
+        if (lbl) lbl.textContent = 'TAKE CONTROL · LAUNCH FURY';
         const tl = document.getElementById('touch-takeoff-land');
-        if (tl) tl.textContent = 'TAKEOFF';
+        if (tl) tl.textContent = 'LAUNCH';
       }
     } else if (this.manualOverrideTimer > 0) {
       this.manualOverrideTimer -= dt;
@@ -968,10 +915,10 @@ export class FuryWorld {
       f.gearDeploy = THREE.MathUtils.lerp(f.gearDeploy, f.pos.y < 7 ? 1 : 0, dt * 2.5);
     } else {
       const angle = this.time * 0.32;
-      let cx = 0, cz = -28, rad = 68, alt = 26;
-      if (this.waypoint === 'warzone') { cx = -105; cz = -18; rad = 52; alt = 22; }
-      else if (this.waypoint === 'waterpolo') { cx = 105; cz = -18; rad = 50; alt = 22; }
-      else if (this.waypoint === 'orbit') { cx = 0; cz = -12; rad = 148; alt = 38; }
+      let cx = 0, cz = -32, rad = 68, alt = 24;
+      if (this.waypoint === 'warzone') { cx = -108; cz = -20; rad = 52; alt = 22; }
+      else if (this.waypoint === 'waterpolo') { cx = 108; cz = -20; rad = 50; alt = 22; }
+      else if (this.waypoint === 'orbit') { cx = 0; cz = -14; rad = 148; alt = 36; }
 
       const tx = cx + Math.cos(angle) * rad;
       const tz = cz + Math.sin(angle) * rad;
@@ -995,10 +942,10 @@ export class FuryWorld {
     this.aileronR.rotation.x = f.roll * 0.45;
     this.aileronL.rotation.x = -f.roll * 0.45;
     const flicker = 0.9 + Math.sin(this.time * 48) * 0.14;
-    const flameLen = (boost ? 1.65 : 0.95) * flicker;
+    const flameLen = (boost ? 1.6 : 0.9) * flicker;
     this.flameOuter.scale.set(1, 1, flameLen);
     this.flameInner.scale.set(1, 1, flameLen * 0.85);
-    this.burnerLight.intensity = boost ? 5.5 : 2.6;
+    this.burnerLight.intensity = boost ? 4.8 : 2.2;
 
     if (this.audioOn && this.jetGain && this.audioCtx) {
       this.jetFilter.frequency.setTargetAtTime(180 + f.speed * 4.5, this.audioCtx.currentTime, 0.08);
@@ -1041,21 +988,21 @@ export class FuryWorld {
   _updateCamera(dt) {
     const f = this.flight;
     if (f.grounded) {
-      const a = this.time * 0.22;
-      const targetPos = new THREE.Vector3(Math.sin(a) * 14 + 6, 6.2 + Math.sin(a * 0.7) * 1.1, f.pos.z + 17);
-      this.camera.position.lerp(targetPos, dt * 2.2);
-      this.camera.lookAt(f.pos.x, f.pos.y + 1.8, f.pos.z - 22);
+      const sway = Math.sin(this.time * 0.25) * 2.2;
+      const targetPos = new THREE.Vector3(6.8 + sway, 4.1, f.pos.z + 11.2);
+      this.camera.position.lerp(targetPos, dt * 2.5);
+      this.camera.lookAt(f.pos.x - 2.2, f.pos.y + 1.1, f.pos.z - 26);
       return;
     }
     if (this.camMode === 'cinematic') {
       const a = this.time * 0.4;
-      const desired = new THREE.Vector3(f.pos.x + Math.cos(a) * 26, f.pos.y + 9, f.pos.z + Math.sin(a) * 26);
+      const desired = new THREE.Vector3(f.pos.x + Math.cos(a) * 24, f.pos.y + 8, f.pos.z + Math.sin(a) * 24);
       this.camera.position.lerp(desired, dt * 3.5);
       this.camera.lookAt(f.pos);
     } else {
-      const back = new THREE.Vector3(-Math.sin(f.yaw), 0.24 - Math.sin(f.pitch) * 0.35, -Math.cos(f.yaw)).normalize();
-      const desired = f.pos.clone().addScaledVector(back, 19.5);
-      desired.y = Math.max(3.0, desired.y + 3.2);
+      const back = new THREE.Vector3(-Math.sin(f.yaw), 0.22 - Math.sin(f.pitch) * 0.35, -Math.cos(f.yaw)).normalize();
+      const desired = f.pos.clone().addScaledVector(back, 17.5);
+      desired.y = Math.max(3.0, desired.y + 2.8);
       this.camera.position.lerp(desired, dt * 5.2);
       const lookAhead = f.pos.clone().add(new THREE.Vector3(Math.sin(f.yaw) * 18, Math.sin(f.pitch) * 10, Math.cos(f.yaw) * 18));
       this.camera.lookAt(lookAhead);
@@ -1083,9 +1030,9 @@ export class FuryWorld {
       elStatus.textContent = f.grounded ? 'RUNWAY READY' : this.autoLanding ? 'FINAL APPROACH' : this.manualOverrideTimer > 0 ? 'MANUAL FLIGHT' : 'AUTOPILOT ACTIVE';
     }
     if (elSec) {
-      if (f.pos.distanceTo(this.warzoneCenter) < 75) elSec.textContent = 'WARZONE COMBAT';
+      if (f.pos.distanceTo(this.warzoneCenter) < 75) elSec.textContent = 'WARZONE OPS';
       else if (f.pos.distanceTo(this.waterPoloCenter) < 75) elSec.textContent = 'NCAA WATER POLO';
-      else if (f.pos.z > 50) elSec.textContent = 'EDWARDS RWY 22';
+      else if (f.pos.z > 50) elSec.textContent = 'RUNWAY 22';
       else elSec.textContent = 'MONUMENT PLAZA';
     }
   }
