@@ -1,36 +1,11 @@
 /**
- * APPLICATION ORCHESTRATOR — RONALD GINOTI PORTFOLIO
+ * APPLICATION ORCHESTRATOR (v4) — RONALD GINOTI PORTFOLIO
  */
 
 import { FuryWorld } from './fury-world.js';
 import { ZombiesGame } from './zombies-game.js';
 import { TimelineEngine } from './timeline-engine.js';
 import { VideoController } from './video-controller.js';
-
-function initPrecisionCursor() {
-  const cursor = document.getElementById('precision-cursor');
-  if (!cursor || window.matchMedia('(pointer: coarse)').matches) return;
-
-  let tx = -100, ty = -100, cx = -100, cy = -100;
-  window.addEventListener('mousemove', (e) => {
-    tx = e.clientX;
-    ty = e.clientY;
-    cursor.classList.add('is-visible');
-  }, { passive: true });
-
-  document.addEventListener('mouseover', (e) => {
-    const interactive = e.target.closest('a, button, input');
-    cursor.classList.toggle('is-hover', Boolean(interactive));
-  });
-
-  const tick = () => {
-    cx += (tx - cx) * 0.24;
-    cy += (ty - cy) * 0.24;
-    cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
-    requestAnimationFrame(tick);
-  };
-  tick();
-}
 
 function initDossierMenu() {
   const trigger = document.getElementById('menu-trigger');
@@ -43,7 +18,7 @@ function initDossierMenu() {
     overlay.classList.toggle('is-open', open);
     overlay.setAttribute('aria-hidden', String(!open));
     trigger.setAttribute('aria-expanded', String(open));
-    if (label) label.textContent = open ? 'CLOSE' : 'DOSSIER';
+    if (label) label.textContent = open ? 'CLOSE' : 'ARCHIVE';
     document.body.style.overflow = open ? 'hidden' : '';
   };
 
@@ -67,7 +42,7 @@ function initScrollTelemetry() {
     if (bar) bar.style.width = `${pct}%`;
     if (pctEl) pctEl.textContent = `${String(pct).padStart(2, '0')}%`;
 
-    const probe = window.innerHeight * 0.38;
+    const probe = window.innerHeight * 0.42;
     for (const sec of sections) {
       const r = sec.getBoundingClientRect();
       if (r.top <= probe && r.bottom >= probe) {
@@ -99,7 +74,7 @@ function initCarrierGatewayLab() {
     const t = miles / 380;
     const inv = 1 - t;
     const x = inv * inv * 40 + 2 * inv * t * 210 + t * t * 380;
-    const y = inv * inv * 148 + 2 * inv * t * 120 + t * t * 42;
+    const y = inv * inv * 140 + 2 * inv * t * 112 + t * t * 38;
     car.setAttribute('transform', `translate(${x.toFixed(1)}, ${y.toFixed(1)})`);
 
     const switched = miles >= 185;
@@ -107,22 +82,22 @@ function initCarrierGatewayLab() {
       vzwPath.setAttribute(
         'd',
         switched
-          ? `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 380) / 2).toFixed(1)} ${(y - 24).toFixed(1)} 380 42`
-          : `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 18).toFixed(1)} 40 148`
+          ? `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 380) / 2).toFixed(1)} ${(y - 22).toFixed(1)} 380 38`
+          : `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 16).toFixed(1)} 40 140`
       );
     }
     if (attPath) {
-      attPath.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 34).toFixed(1)} 40 148`);
+      attPath.setAttribute('d', `M${x.toFixed(1)} ${y.toFixed(1)} Q${((x + 40) / 2).toFixed(1)} ${(y + 30).toFixed(1)} 40 140`);
     }
 
-    const region = miles < 65 ? 'LOS ANGELES BASIN' : miles < 185 ? 'GRAPEVINE / BAKERSFIELD' : miles < 305 ? 'CENTRAL VALLEY' : 'BAY AREA';
+    const region = miles < 65 ? 'LA BASIN' : miles < 185 ? 'GRAPEVINE' : miles < 305 ? 'CENTRAL VALLEY' : 'BAY AREA';
     if (mileReadout) mileReadout.textContent = `MILE ${miles} · ${region}`;
 
     const vzwLatency = switched ? Math.round(16 + (1 - t) * 20) : Math.round(18 + t * 34);
     const attLatency = Math.round(20 + t * 62);
-    if (vzwGw) vzwGw.textContent = switched ? 'BAY AREA GW (SWITCHED)' : 'LOS ANGELES GW (LOCAL)';
+    if (vzwGw) vzwGw.textContent = switched ? 'SFO GATEWAY (HANDOFF OK)' : 'LAX GATEWAY (LOCAL)';
     if (vzwRtt) vzwRtt.textContent = `${vzwLatency} ms · Jitter ${(2.4 + Math.abs(0.5 - t) * 2.1).toFixed(1)} ms · MTU 1428`;
-    if (attGw) attGw.textContent = switched ? 'LOS ANGELES GW (STUCK)' : 'LOS ANGELES GW (LOCAL)';
+    if (attGw) attGw.textContent = switched ? 'LAX GATEWAY (PINNED)' : 'LAX GATEWAY (LOCAL)';
     if (attRtt) attRtt.textContent = `${attLatency} ms · Jitter ${(4.2 + t * 9.8).toFixed(1)} ms · MTU 1400`;
   };
 
@@ -131,7 +106,6 @@ function initCarrierGatewayLab() {
 }
 
 function boot() {
-  initPrecisionCursor();
   initDossierMenu();
   initScrollTelemetry();
   initCarrierGatewayLab();

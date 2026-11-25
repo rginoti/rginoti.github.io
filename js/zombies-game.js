@@ -1,5 +1,7 @@
 /**
- * ACTIVISION ERA GAME SWAP — HIGH-CRAFT 3D FIRST-PERSON ZOMBIES ARENA (Three.js)
+ * ACTIVISION ERA GAME SWAP — 3D FIRST-PERSON ZOMBIES KILLHOUSE (v4)
+ * Upgraded industrial bay lighting & pre-seeded wave so the Killhouse interior,
+ * tactical rifle viewmodel, and advancing zombies are crisply visible immediately.
  */
 
 import * as THREE from 'three';
@@ -13,7 +15,8 @@ export class ZombiesGame {
     this.feedEl = document.getElementById('fps-feed');
 
     this.isPlaying = false;
-    this.isVisible = false;
+    this.hadPointerLock = false;
+    this.isVisible = true;
     this.isFiring = false;
     this.fireCooldown = 0;
 
@@ -39,21 +42,23 @@ export class ZombiesGame {
     this._initScene();
     this._buildKillhouseArena();
     this._buildTacticalRifle();
+    for (let i = 0; i < 5; i++) this._spawnZombie(14 + i * 3);
     this._bindControls();
     this._observeVisibility();
 
     this.clock = new THREE.Clock();
+    this.renderer.render(this.scene, this.camera);
     this._animate();
   }
 
   _initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x090a0e);
-    this.scene.fog = new THREE.FogExp2(0x090a0e, 0.026);
+    this.scene.background = new THREE.Color(0x0c0f15);
+    this.scene.fog = new THREE.FogExp2(0x0c0f15, 0.019);
 
     const w = this.stageEl.clientWidth || 800;
     const h = this.stageEl.clientHeight || 500;
-    this.camera = new THREE.PerspectiveCamera(72, w / h, 0.08, 120);
+    this.camera = new THREE.PerspectiveCamera(70, w / h, 0.08, 120);
     this.camera.position.set(0, 1.72, 0);
     this.scene.add(this.camera);
 
@@ -61,18 +66,31 @@ export class ZombiesGame {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(w, h);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.45;
 
-    this.scene.add(new THREE.HemisphereLight(0x475569, 0x111318, 0.9));
-    this.sodiumLight = new THREE.PointLight(0xf59e0b, 3.2, 48);
-    this.sodiumLight.position.set(0, 11, -12);
+    this.scene.add(new THREE.HemisphereLight(0xcbd5e1, 0x1e293b, 2.1));
+
+    const keyDir = new THREE.DirectionalLight(0xe2e8f0, 2.2);
+    keyDir.position.set(8, 18, 10);
+    this.scene.add(keyDir);
+
+    this.sodiumLight = new THREE.PointLight(0xfbbf24, 260, 64);
+    this.sodiumLight.position.set(0, 10, -12);
     this.scene.add(this.sodiumLight);
 
-    const redStrobe = new THREE.PointLight(0xef4444, 1.8, 36);
-    redStrobe.position.set(-14, 7, -20);
-    this.scene.add(redStrobe);
+    const bayLightL = new THREE.PointLight(0x60a5fa, 190, 54);
+    bayLightL.position.set(-12, 8.5, -17);
+    this.scene.add(bayLightL);
 
-    this.muzzleLight = new THREE.PointLight(0xfde68a, 0, 18);
+    const bayLightR = new THREE.PointLight(0xef4444, 150, 50);
+    bayLightR.position.set(12, 8, -19);
+    this.scene.add(bayLightR);
+
+    const gunLight = new THREE.PointLight(0xe2e8f0, 14, 5);
+    gunLight.position.set(0.22, 0.42, 0.25);
+    this.camera.add(gunLight);
+
+    this.muzzleLight = new THREE.PointLight(0xfde68a, 0, 24);
     this.muzzleLight.position.set(0.28, -0.1, -1.25);
     this.camera.add(this.muzzleLight);
 
@@ -89,32 +107,32 @@ export class ZombiesGame {
   _buildKillhouseArena() {
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(90, 90),
-      new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.92, metalness: 0.08 })
+      new THREE.MeshStandardMaterial({ color: 0x181c24, roughness: 0.86, metalness: 0.12 })
     );
     floor.rotation.x = -Math.PI / 2;
     this.scene.add(floor);
 
-    const grid = new THREE.GridHelper(84, 28, 0x2a2e38, 0x1e212a);
+    const grid = new THREE.GridHelper(84, 28, 0x2d3544, 0x1e2430);
     grid.position.y = 0.02;
     this.scene.add(grid);
 
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1f232b, roughness: 0.88 });
-    const containerRed = new THREE.MeshStandardMaterial({ color: 0x5c241d, roughness: 0.72 });
-    const containerSlate = new THREE.MeshStandardMaterial({ color: 0x26313e, roughness: 0.72 });
-    const sandbagMat = new THREE.MeshStandardMaterial({ color: 0x544a3a, roughness: 0.95 });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x242a36, roughness: 0.85 });
+    const containerOlive = new THREE.MeshStandardMaterial({ color: 0x2f3b32, roughness: 0.72 });
+    const containerSlate = new THREE.MeshStandardMaterial({ color: 0x283444, roughness: 0.72 });
+    const sandbagMat = new THREE.MeshStandardMaterial({ color: 0x5c5343, roughness: 0.92 });
 
     const backWall = new THREE.Mesh(new THREE.BoxGeometry(72, 12, 1.5), wallMat);
     backWall.position.set(0, 6, -34);
     this.scene.add(backWall);
 
-    const c1 = new THREE.Mesh(new THREE.BoxGeometry(8, 3.6, 3.2), containerRed);
-    c1.position.set(-12, 1.8, -18);
-    c1.rotation.y = 0.3;
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(8, 3.6, 3.2), containerOlive);
+    c1.position.set(-10.5, 1.8, -16);
+    c1.rotation.y = 0.28;
     this.scene.add(c1);
 
     const c2 = new THREE.Mesh(new THREE.BoxGeometry(8, 3.6, 3.2), containerSlate);
-    c2.position.set(13, 1.8, -21);
-    c2.rotation.y = -0.35;
+    c2.position.set(11, 1.8, -18);
+    c2.rotation.y = -0.32;
     this.scene.add(c2);
 
     for (let x = -4.2; x <= 4.2; x += 1.4) {
@@ -123,8 +141,8 @@ export class ZombiesGame {
       this.scene.add(bag);
     }
 
-    for (const px of [-18, 18]) {
-      for (const pz of [-8, -24]) {
+    for (const px of [-16, 16]) {
+      for (const pz of [-8, -22]) {
         const col = new THREE.Mesh(new THREE.BoxGeometry(1.1, 12, 1.1), wallMat);
         col.position.set(px, 6, pz);
         this.scene.add(col);
@@ -134,9 +152,9 @@ export class ZombiesGame {
 
   _buildTacticalRifle() {
     this.weapon = new THREE.Group();
-    const gunMetal = new THREE.MeshStandardMaterial({ color: 0x1d2026, roughness: 0.35, metalness: 0.78 });
-    const polymer = new THREE.MeshStandardMaterial({ color: 0x121418, roughness: 0.65, metalness: 0.25 });
-    const opticGlass = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18 });
+    const gunMetal = new THREE.MeshStandardMaterial({ color: 0x333946, roughness: 0.32, metalness: 0.78 });
+    const polymer = new THREE.MeshStandardMaterial({ color: 0x1b1e26, roughness: 0.6, metalness: 0.3 });
+    const opticGlass = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.22 });
 
     const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.14, 0.56), gunMetal);
     this.weapon.add(receiver);
@@ -163,7 +181,7 @@ export class ZombiesGame {
     lens.position.set(0, 0.11, 0.082);
     this.weapon.add(lens);
 
-    const redDot = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff2d20 }));
+    const redDot = new THREE.Mesh(new THREE.SphereGeometry(0.0045, 6, 6), new THREE.MeshBasicMaterial({ color: 0xdff140 }));
     redDot.position.set(0, 0.11, 0.083);
     this.weapon.add(redDot);
 
@@ -174,15 +192,15 @@ export class ZombiesGame {
     this.muzzleFlash.position.set(0, 0.02, -1.02);
     this.weapon.add(this.muzzleFlash);
 
-    this.weapon.position.set(0.30, -0.27, -0.52);
+    this.weapon.position.set(0.30, -0.26, -0.52);
     this.camera.add(this.weapon);
   }
 
-  _spawnZombie() {
+  _spawnZombie(customDist = null) {
     const zGroup = new THREE.Group();
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0x4b5d4e, roughness: 0.85 });
-    const coatMat = new THREE.MeshStandardMaterial({ color: 0x2b2927, roughness: 0.92 });
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0x5c7060, roughness: 0.8 });
+    const coatMat = new THREE.MeshStandardMaterial({ color: 0x33363f, roughness: 0.88 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xdff140 });
 
     const torso = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.92, 0.34), coatMat);
     torso.position.y = 1.18;
@@ -195,7 +213,7 @@ export class ZombiesGame {
     zGroup.add(head);
 
     for (const ex of [-0.09, 0.09]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), eyeMat);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 6), eyeMat);
       eye.position.set(ex, 1.92, 0.2);
       zGroup.add(eye);
     }
@@ -214,9 +232,10 @@ export class ZombiesGame {
     legR.position.x = 0.17;
     zGroup.add(legR);
 
-    const angle = (Math.random() - 0.5) * 1.45;
-    const dist = 24 + Math.random() * 11;
+    const angle = (Math.random() - 0.5) * 1.15;
+    const dist = customDist ?? 22 + Math.random() * 10;
     zGroup.position.set(Math.sin(angle) * dist, 0, -Math.cos(angle) * dist);
+    zGroup.lookAt(0, 0, 0);
     zGroup.userData = {
       hp: 60 + this.wave * 15,
       speed: 2.3 + Math.min(3.5, this.wave * 0.28) + Math.random() * 0.8,
@@ -240,48 +259,44 @@ export class ZombiesGame {
     if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
 
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
     if (type === 'shot') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(190, now);
       osc.frequency.exponentialRampToValueAtTime(42, now + 0.075);
       gain.gain.setValueAtTime(0.14, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-      osc.connect(gain); gain.connect(ctx.destination);
       osc.start(now); osc.stop(now + 0.085);
     } else if (type === 'hit') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(1450, now);
       gain.gain.setValueAtTime(0.09, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-      osc.connect(gain); gain.connect(ctx.destination);
       osc.start(now); osc.stop(now + 0.05);
     } else if (type === 'boom') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(110, now);
       osc.frequency.exponentialRampToValueAtTime(24, now + 0.42);
       gain.gain.setValueAtTime(0.32, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-      osc.connect(gain); gain.connect(ctx.destination);
       osc.start(now); osc.stop(now + 0.46);
     }
   }
 
   _fireRifle() {
     this.recoil = 0.075;
-    this.muzzleLight.intensity = 5.5;
+    this.muzzleLight.intensity = 120;
     this.muzzleFlash.material.opacity = 0.95;
     this.muzzleFlash.rotation.z = Math.random() * Math.PI;
     this._playSfx('shot');
 
     const casing = new THREE.Mesh(
       new THREE.CylinderGeometry(0.012, 0.012, 0.045, 6),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 })
+      new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.2 })
     );
     const origin = new THREE.Vector3(0.36, -0.22, -0.45).applyMatrix4(this.camera.matrixWorld);
     casing.position.copy(origin);
@@ -304,7 +319,7 @@ export class ZombiesGame {
       zombie.position.z -= 0.35;
       this._triggerHitmarker();
       this._playSfx('hit');
-      this._spawnHitSparks(hit.point, isHead ? 0xff4d00 : 0xef4444);
+      this._spawnHitSparks(hit.point, isHead ? 0xdff140 : 0xf87171);
 
       if (zombie.userData.hp <= 0) {
         this._killZombie(zombie, isHead ? 'HEADSHOT +150' : 'ELIMINATED +100');
@@ -318,7 +333,7 @@ export class ZombiesGame {
       new THREE.SphereGeometry(0.14, 10, 10),
       new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 0.6, metalness: 0.3 })
     );
-    const led = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), new THREE.MeshBasicMaterial({ color: 0xff2d20 }));
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), new THREE.MeshBasicMaterial({ color: 0xdff140 }));
     led.position.y = 0.14;
     g.add(body, led);
 
@@ -335,14 +350,14 @@ export class ZombiesGame {
 
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(1, 14, 14),
-      new THREE.MeshBasicMaterial({ color: 0xff5a12, transparent: true, opacity: 0.92 })
+      new THREE.MeshBasicMaterial({ color: 0xff7a28, transparent: true, opacity: 0.92 })
     );
     sphere.position.copy(pos);
     this.scene.add(sphere);
 
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(0.5, 1.3, 24),
-      new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+      new THREE.MeshBasicMaterial({ color: 0xdff140, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
     );
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(pos.x, 0.15, pos.z);
@@ -410,7 +425,18 @@ export class ZombiesGame {
 
     document.addEventListener('pointerlockchange', () => {
       const locked = document.pointerLockElement === this.canvas;
-      if (!locked && this.isPlaying && !('ontouchstart' in window)) {
+      if (locked) {
+        this.hadPointerLock = true;
+      } else if (this.hadPointerLock && this.isPlaying) {
+        this.hadPointerLock = false;
+        this.isPlaying = false;
+        this.isFiring = false;
+        if (this.overlayEl) this.overlayEl.classList.remove('is-hidden');
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.isPlaying) {
         this.isPlaying = false;
         this.isFiring = false;
         if (this.overlayEl) this.overlayEl.classList.remove('is-hidden');
@@ -422,6 +448,14 @@ export class ZombiesGame {
       if (document.pointerLockElement === this.canvas) {
         this.yaw -= e.movementX * 0.0022;
         this.pitch = THREE.MathUtils.clamp(this.pitch - e.movementY * 0.002, -0.55, 0.55);
+      } else {
+        const r = this.canvas.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+          const nx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+          const ny = ((e.clientY - r.top) / r.height - 0.5) * 2;
+          this.yaw = -nx * 0.65;
+          this.pitch = THREE.MathUtils.clamp(-ny * 0.38, -0.5, 0.5);
+        }
       }
     });
 
@@ -464,7 +498,12 @@ export class ZombiesGame {
   }
 
   _observeVisibility() {
-    const io = new IntersectionObserver((entries) => { this.isVisible = entries[0].isIntersecting; }, { threshold: 0.05 });
+    const io = new IntersectionObserver((entries) => {
+      this.isVisible = entries[0].isIntersecting;
+      if (!this.isVisible && document.pointerLockElement === this.canvas && document.exitPointerLock) {
+        try { document.exitPointerLock(); } catch (_) {}
+      }
+    }, { threshold: 0.05 });
     io.observe(this.stageEl);
   }
 
@@ -474,8 +513,6 @@ export class ZombiesGame {
 
     const dt = Math.min(this.clock.getDelta(), 0.05);
     this.time += dt;
-
-    this.sodiumLight.intensity = 2.9 + Math.sin(this.time * 19) * 0.18 + (Math.random() > 0.96 ? -0.9 : 0);
 
     this.fireCooldown = Math.max(0, this.fireCooldown - dt);
     if (this.isPlaying && this.isFiring && this.fireCooldown <= 0) {
@@ -489,7 +526,7 @@ export class ZombiesGame {
     this.muzzleFlash.material.opacity = THREE.MathUtils.lerp(this.muzzleFlash.material.opacity, 0, dt * 28);
 
     this.weapon.position.z = -0.52 + this.recoil;
-    this.weapon.position.y = -0.27 + Math.sin(this.time * 2.2) * 0.006;
+    this.weapon.position.y = -0.26 + Math.sin(this.time * 2.2) * 0.005;
     this.weapon.rotation.x = this.recoil * 1.6;
 
     this.camera.rotation.order = 'YXZ';
@@ -497,8 +534,8 @@ export class ZombiesGame {
     this.camera.rotation.x = this.pitch + this.recoil * 0.25 + (Math.random() - 0.5) * this.shake * 0.15;
 
     this.spawnTimer += dt;
-    const maxZombies = Math.min(18, 6 + this.wave * 2);
-    if (this.spawnTimer > Math.max(0.65, 1.8 - this.wave * 0.12) && this.zombies.length < maxZombies) {
+    const maxZombies = Math.min(16, 6 + this.wave * 2);
+    if (this.spawnTimer > Math.max(0.7, 1.8 - this.wave * 0.12) && this.zombies.length < maxZombies) {
       this.spawnTimer = 0;
       this._spawnZombie();
     }
@@ -513,9 +550,10 @@ export class ZombiesGame {
         continue;
       }
       const toPlayer = new THREE.Vector3(0, 0, 0).sub(z.position);
-      if (toPlayer.length() > 3.2) {
+      const stepSpeed = this.isPlaying ? z.userData.speed : z.userData.speed * 0.25;
+      if (toPlayer.length() > 5.2) {
         toPlayer.normalize();
-        z.position.addScaledVector(toPlayer, z.userData.speed * dt);
+        z.position.addScaledVector(toPlayer, stepSpeed * dt);
         z.lookAt(0, 0, 0);
         const s = Math.sin(this.time * 6 + z.userData.phase);
         z.userData.legL.rotation.x = s * 0.55;
@@ -523,7 +561,7 @@ export class ZombiesGame {
         z.userData.armL.rotation.x = -0.15 + s * 0.12;
         z.userData.armR.rotation.x = -0.15 - s * 0.12;
       } else {
-        z.position.set((Math.random() - 0.5) * 32, 0, -28);
+        z.position.set((Math.random() - 0.5) * 26, 0, -26);
       }
     }
 
